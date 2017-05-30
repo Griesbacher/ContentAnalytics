@@ -57,12 +57,12 @@ def apply_filters(tweets, *filters):
     return tweets
 
 
-INDEX_ALL_FILTERED_STEMED = "index_all_filterd_stemed"
-INDEX_ALL_FILTERED_LEMED = "index_all_filterd_lemed"
-INDEX_ALL_FILTERED = "index_all_filterd"
-INDEX_60k_FILTERED_STEMED = "index_60k_filterd_stemed"
-INDEX_60k_FILTERED_LEMED = "index_60k_filterd_lemed"
-INDEX_60k_FILTERED = "index_60k_filterd"
+INDEX_ALL_FILTERED_STEMED = "index_all_filtered_stemed"
+INDEX_ALL_FILTERED_LEMED = "index_all_filtered_lemed"
+INDEX_ALL_FILTERED = "index_all_filtered"
+INDEX_60k_FILTERED_STEMED = "index_60k_filtered_stemed"
+INDEX_60k_FILTERED_LEMED = "index_60k_filtered_lemed"
+INDEX_60k_FILTERED = "index_60k_filtered"
 
 normalizer = Normalizer()
 es = Elasticsearch()
