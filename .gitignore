@@ -103,5 +103,6 @@ ENV/
 
 #Data
 train.csv
+csv_data.p
 test.csv
 .idea

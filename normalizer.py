@@ -2,11 +2,11 @@ import nltk
 import string
 
 
+# nltk.download('punkt')
+
 class Normalizer:
-    def __init__(self):
-        self._st = nltk.stem.porter.PorterStemmer()
-        self._wln = nltk.WordNetLemmatizer()
-        nltk.download('punkt')
+    _st = nltk.stem.porter.PorterStemmer()
+    _wln = nltk.WordNetLemmatizer()
 
     def stem(self, text):
         return " ".join([self._st.stem(token) for token in self._tokenize(text)])
