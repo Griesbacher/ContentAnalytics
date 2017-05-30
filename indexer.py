@@ -1,4 +1,6 @@
 import csv
+import os
+import pickle
 
 from elasticsearch import Elasticsearch
 
@@ -8,24 +10,28 @@ from tweet import Tweet
 unwanted_strings = ["{link}", "@mention"]
 
 
-def load_test_csv(filename):
-    with open(filename, 'rb') as f:
-        reader = csv.DictReader(f)
-        data = list()
-        cast = [
-            (["id"], int),
-            (Tweet.get_k_keys(), float),
-            (Tweet.get_s_keys(), float),
-            (Tweet.get_w_keys(), float),
-            (["tweet"], str)
-        ]
-        for row in reader:
-            new_tweet = Tweet()
-            for key in row:
-                for cast_type, cast_func in cast:
-                    if key in cast_type:
-                        new_tweet[key] = cast_func(row[key])
-            data.append(new_tweet)
+def load_test_csv(filename, use_pickle=True):
+    pickle_file = "csv_data.p"
+    if use_pickle and os.path.exists(pickle_file):
+        data = pickle.load(open(pickle_file, "rb"))
+    else:
+        with open(filename, 'rb') as f:
+            reader = csv.DictReader(f)
+            data = list()
+            cast = [
+                (["id"], int),
+                (Tweet.get_k_keys(), float),
+                (Tweet.get_s_keys(), float),
+                (Tweet.get_w_keys(), float),
+                (["tweet"], str)
+            ]
+            for row in reader:
+                new_tweet = Tweet()
+                for key in row:
+                    for cast_type, cast_func in cast:
+                        if key in cast_type:
+                            new_tweet[key] = cast_func(row[key])
+                data.append(new_tweet)
     return data
 
 
