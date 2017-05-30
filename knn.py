@@ -3,6 +3,7 @@ import time
 import indexer
 from elasticsearch import Elasticsearch
 
+from csv_handling import write_tweets_to_csv
 from tweet import Tweet
 
 
@@ -43,12 +44,13 @@ if __name__ == '__main__':
     index = indexer.INDEX_60k_FILTERED_LEMED
     knn = KNN(index, Elasticsearch())
     plain_tweets = indexer.load_test_csv(indexer.TRAININGS_DATA_FILE)
-    filtered_tweets = indexer.get_filter_from_index(index)(plain_tweets[60000:])
+    filtered_tweets = indexer.get_filter_from_index(index)(plain_tweets[60002:60052])
     k = 5
+    calculated_tweets = []
     for t in filtered_tweets:
         start = time.time()
         calculated_tweet = knn.avg(knn.get_best_k(t, k))
         calculated_tweet.set_id(t.get_id())
-        print "KNN took %f " % (time.time() - start)
-        print calculated_tweet
-        break
+        calculated_tweets.append(calculated_tweet)
+
+    write_tweets_to_csv(calculated_tweets, index + ".csv")

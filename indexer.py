@@ -1,45 +1,10 @@
-import csv
-import os
-import pickle
-
 from elasticsearch import Elasticsearch
 
+from csv_handling import load_tweet_csv
 from normalizer import Normalizer
-from tweet import Tweet
 
 unwanted_strings = ["{link}", "@mention"]
 TRAININGS_DATA_FILE = "train.csv"
-csv_cache = None
-
-
-def load_test_csv(filename, use_pickle=True, use_cache=True):
-    global csv_cache
-    if use_cache and csv_cache is not None:
-        return csv_cache
-    pickle_file = "csv_data.p"
-    if use_pickle and os.path.exists(pickle_file):
-        data = pickle.load(open(pickle_file, "rb"))
-    else:
-        with open(filename, 'rb') as f:
-            reader = csv.DictReader(f)
-            data = list()
-            cast = [
-                (["id"], int),
-                (Tweet.get_k_keys(), float),
-                (Tweet.get_s_keys(), float),
-                (Tweet.get_w_keys(), float),
-                (["tweet"], str)
-            ]
-            for row in reader:
-                new_tweet = Tweet()
-                for key in row:
-                    for cast_type, cast_func in cast:
-                        if key in cast_type:
-                            new_tweet[key] = cast_func(row[key])
-                data.append(new_tweet)
-            pickle.dump(data, open(pickle_file, "wb"))
-    csv_cache = data
-    return data
 
 
 def filter_tweet(tweet):
@@ -131,5 +96,5 @@ def index_60k_filtered(tweets):
 if __name__ == '__main__':
     es = Elasticsearch()
 
-    all_tweets = load_test_csv(TRAININGS_DATA_FILE)
+    all_tweets = load_tweet_csv(TRAININGS_DATA_FILE)
     index_60k_filtered_lemed(all_tweets)

@@ -1,4 +1,3 @@
-import csv
 import pprint
 
 
@@ -46,15 +45,3 @@ class Tweet(dict):
 
     def __str__(self):
         return pprint.pformat(self).__str__()
-
-
-def write_tweets_to_csv(tweets, filename):
-    header = ["id"]
-    header.extend(Tweet.get_all_keys())
-    with open(filename, 'wb') as testfile:
-        csv_writer = csv.writer(testfile)
-        csv_writer.writerow(header)
-        for t in tweets:
-            line = [t.get_id()]
-            for key in Tweet.get_all_keys(): line.append(t[key])
-            csv_writer.writerow(line)
