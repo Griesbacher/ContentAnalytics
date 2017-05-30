@@ -9,9 +9,13 @@ from tweet import Tweet
 
 unwanted_strings = ["{link}", "@mention"]
 TRAININGS_DATA_FILE = "train.csv"
+csv_cache = None
 
 
-def load_test_csv(filename, use_pickle=True):
+def load_test_csv(filename, use_pickle=True, use_cache=True):
+    global csv_cache
+    if use_cache and csv_cache is not None:
+        return csv_cache
     pickle_file = "csv_data.p"
     if use_pickle and os.path.exists(pickle_file):
         data = pickle.load(open(pickle_file, "rb"))
@@ -34,6 +38,7 @@ def load_test_csv(filename, use_pickle=True):
                             new_tweet[key] = cast_func(row[key])
                 data.append(new_tweet)
             pickle.dump(data, open(pickle_file, "wb"))
+    csv_cache = data
     return data
 
 
