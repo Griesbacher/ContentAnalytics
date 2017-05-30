@@ -3,7 +3,7 @@ import time
 import indexer
 from elasticsearch import Elasticsearch
 
-from csv_handling import write_tweets_to_csv
+from csv_handling import write_tweets_to_csv, load_tweet_csv
 from tweet import Tweet
 
 
@@ -34,8 +34,10 @@ class KNN:
             for key in Tweet.get_all_keys():
                 result_tweet[key] += tweet[key]
 
-        for key in Tweet.get_all_keys():
-            result_tweet[key] /= len(weighted_tweets)
+        if len(weighted_tweets) > 0:
+            # TODO: there are some tweets with no match...
+            for key in Tweet.get_all_keys():
+                result_tweet[key] /= len(weighted_tweets)
 
         return result_tweet
 
@@ -43,14 +45,18 @@ class KNN:
 if __name__ == '__main__':
     index = indexer.INDEX_60k_FILTERED_LEMED
     knn = KNN(index, Elasticsearch())
-    plain_tweets = indexer.load_test_csv(indexer.TRAININGS_DATA_FILE)
-    filtered_tweets = indexer.get_filter_from_index(index)(plain_tweets[60002:60052])
+    plain_tweets = load_tweet_csv(indexer.TRAININGS_DATA_FILE)
+    filtered_tweets = indexer.get_filter_from_index(index)(plain_tweets[60000:]) # plain_tweets[60000:] k:5 -> RMSE: 0.192739
     k = 5
+    i = 0
     calculated_tweets = []
     for t in filtered_tweets:
         start = time.time()
         calculated_tweet = knn.avg(knn.get_best_k(t, k))
         calculated_tweet.set_id(t.get_id())
         calculated_tweets.append(calculated_tweet)
+        i += 1
+        if i % 1000 == 0:
+            print "KNN analysed %d of %d" % (i, len(filtered_tweets))
 
     write_tweets_to_csv(calculated_tweets, index + ".csv")

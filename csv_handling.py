@@ -68,6 +68,7 @@ def analyse_csv(result_csv, train_csv):
     rmse_calc_values = []
     rmse_real_values = []
 
+    # TODO: slow... maybe: change to two dicts with id as key
     for ct in calc_tweets:
         for rt in real_tweets:
             if rt.get_id() == ct.get_id():
