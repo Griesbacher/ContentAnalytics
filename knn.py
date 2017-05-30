@@ -43,10 +43,11 @@ class KNN:
 
 
 if __name__ == '__main__':
-    index = indexer.INDEX_60k_FILTERED_LEMED
+    index = indexer.INDEX_ALL_FILTERED_LEMED
     knn = KNN(index, Elasticsearch())
-    plain_tweets = load_tweet_csv(indexer.TRAININGS_DATA_FILE)
-    filtered_tweets = indexer.get_filter_from_index(index)(plain_tweets[60000:]) # plain_tweets[60000:] k:5 -> RMSE: 0.192739
+    plain_tweets = load_tweet_csv(indexer.TEST_DATA_FILE, use_pickle=False, use_cache=False)
+    filtered_tweets = indexer.get_filter_from_index(index)(plain_tweets)
+    # tweets 60000: k:5 -> RMSE: 0.192739
     k = 5
     i = 0
     calculated_tweets = []

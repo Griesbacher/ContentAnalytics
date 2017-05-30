@@ -5,6 +5,7 @@ from normalizer import Normalizer
 
 unwanted_strings = ["{link}", "@mention"]
 TRAININGS_DATA_FILE = "train.csv"
+TEST_DATA_FILE = "test.csv"
 
 
 def filter_tweet(tweet):
@@ -97,4 +98,4 @@ if __name__ == '__main__':
     es = Elasticsearch()
 
     all_tweets = load_tweet_csv(TRAININGS_DATA_FILE)
-    index_60k_filtered_lemed(all_tweets)
+    index_all_filtered_lemed(all_tweets)
