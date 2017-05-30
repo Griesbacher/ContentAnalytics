@@ -39,7 +39,7 @@ def load_test_csv(filename, use_pickle=True):
 
 def filter_tweet(tweet):
     for s in unwanted_strings:
-        tweet["tweet"] = tweet["tweet"].replace(s, "").strip()
+        tweet.set_tweet(tweet.get_tweet().replace(s, "").strip())
     return tweet
 
 

@@ -2,8 +2,25 @@ import pprint
 
 
 class Tweet(dict):
+    _all_keys = None
+
     def __init__(self, *args, **kwargs):
         super(Tweet, self).__init__(*args, **kwargs)
+        if len(self) == 0:
+            for k in Tweet.get_all_keys():
+                self[k] = 0.0
+
+    def get_tweet(self):
+        return self["tweet"]
+
+    def set_tweet(self, tweet):
+        self["tweet"] = tweet
+
+    def get_id(self):
+        return self["id"]
+
+    def set_id(self, new_id):
+        self["id"] = new_id
 
     @staticmethod
     def get_k_keys():
@@ -17,8 +34,14 @@ class Tweet(dict):
     def get_w_keys():
         return ["w1", "w2", "w3", "w4"]
 
-    def __repr__(self):
-        return self.__str__()
+    @staticmethod
+    def get_all_keys():
+        if Tweet._all_keys is None:
+            Tweet._all_keys = []
+            Tweet._all_keys.extend(Tweet.get_s_keys())
+            Tweet._all_keys.extend(Tweet.get_k_keys())
+            Tweet._all_keys.extend(Tweet.get_w_keys())
+        return Tweet._all_keys
 
     def __str__(self):
         return pprint.pformat(self).__str__()
