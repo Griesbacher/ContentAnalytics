@@ -3,6 +3,7 @@ import csv
 from elasticsearch import Elasticsearch
 
 from normalizer import Normalizer
+from tweet import Tweet
 
 unwanted_strings = ["{link}", "@mention"]
 
@@ -13,13 +14,13 @@ def load_test_csv(filename):
         data = list()
         cast = [
             (["id"], int),
-            (["k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11", "k12", "k13", "k14", "k15"], float),
-            (["s1", "s2", "s3", "s4", "s5"], float),
-            (["w1", "w2", "w3", "w4"], float),
+            (Tweet.get_k_keys(), float),
+            (Tweet.get_s_keys(), float),
+            (Tweet.get_w_keys(), float),
             (["tweet"], str)
         ]
         for row in reader:
-            new_tweet = {}
+            new_tweet = Tweet()
             for key in row:
                 for cast_type, cast_func in cast:
                     if key in cast_type:
@@ -38,6 +39,7 @@ def filter_field_tweet(normalizer_func, fieldname="tweet"):
     def func(tweet):
         tweet[fieldname] = normalizer_func(tweet[fieldname])
         return tweet
+
     return func
 
 
