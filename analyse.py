@@ -42,10 +42,15 @@ def analyse_csv(result_csv, train_csv):
                 rmse_calc_values.append(calc_tweet[key])
                 rmse_real_values.append(dict_real_tweets[calc_id][key])
 
-    print "Overall RMSE: %f" % calc_root_mean_squared_error(rmse_real_values, rmse_calc_values)
-    print "K RMSE: %f" % calc_root_mean_squared_error(rmse_k_real_values, rmse_k_calc_values)
-    print "S RMSE: %f" % calc_root_mean_squared_error(rmse_s_real_values, rmse_s_calc_values)
-    print "W RMSE: %f" % calc_root_mean_squared_error(rmse_w_real_values, rmse_w_calc_values)
+    print "--- %s ---" % result_csv
+    print "Overall      RMSE: %f" % calc_root_mean_squared_error(rmse_real_values, rmse_calc_values)
+    print "K(kind)      RMSE: %f" % calc_root_mean_squared_error(rmse_k_real_values, rmse_k_calc_values)
+    print "S(sentiment) RMSE: %f" % calc_root_mean_squared_error(rmse_s_real_values, rmse_s_calc_values)
+    print "W(when)      RMSE: %f" % calc_root_mean_squared_error(rmse_w_real_values, rmse_w_calc_values)
+    print
+
 
 if __name__ == '__main__':
-    analyse_csv(indexer.INDEX_60k_FILTERED_LEMED + ".csv", indexer.TRAININGS_DATA_FILE)
+    for i in range(3, 10, 2):
+        analyse_csv(indexer.INDEX_60k_FILTERED_LEMED + "_avg_%d.csv" % i, indexer.TRAININGS_DATA_FILE)
+        analyse_csv(indexer.INDEX_60k_FILTERED_LEMED + "_weighted_avg_%d.csv" % i, indexer.TRAININGS_DATA_FILE)
