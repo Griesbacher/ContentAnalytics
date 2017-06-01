@@ -63,7 +63,7 @@ if __name__ == '__main__':
     knn = KNN(index, Elasticsearch())
     plain_tweets = load_tweet_csv(indexer.TRAININGS_DATA_FILE, use_pickle=False, use_cache=False)[60000:]
     filtered_tweets = indexer.get_filter_from_index(index)(plain_tweets)
-    k = 9
+    k = 11
     i = 0
     calculated_tweets_avg = []
     calculated_tweets_weighted_avg = []
@@ -126,4 +126,16 @@ Overall      RMSE: 0.184493
 K(kind)      RMSE: 0.156741
 S(sentiment) RMSE: 0.221260
 W(when)      RMSE: 0.225615
+
+--- index_60k_filtered_lemed_avg_11.csv ---
+Overall      RMSE: 0.184179
+K(kind)      RMSE: 0.156396
+S(sentiment) RMSE: 0.221299
+W(when)      RMSE: 0.224924
+
+--- index_60k_filtered_lemed_weighted_avg_11.csv ---
+Overall      RMSE: 0.183105
+K(kind)      RMSE: 0.155424
+S(sentiment) RMSE: 0.219887
+W(when)      RMSE: 0.223918
 """
