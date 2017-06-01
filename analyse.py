@@ -7,20 +7,45 @@ def analyse_csv(result_csv, train_csv):
     calc_tweets = load_tweet_csv(filename=result_csv, use_cache=False, use_pickle=False)
     real_tweets = load_tweet_csv(filename=train_csv)
 
+    dict_calc_tweets = {}
+    dict_real_tweets = {}
+    for tweet in calc_tweets:
+        dict_calc_tweets[tweet.get_id()] = tweet
+    for tweet in real_tweets:
+        dict_real_tweets[tweet.get_id()] = tweet
+
     rmse_calc_values = []
     rmse_real_values = []
 
-    # TODO: slow... maybe: change to two dicts with id as key
-    for ct in calc_tweets:
-        for rt in real_tweets:
-            if rt.get_id() == ct.get_id():
-                for key in Tweet.get_all_keys():
-                    rmse_calc_values.append(ct[key])
-                    rmse_real_values.append(rt[key])
-                continue
+    rmse_k_calc_values = []
+    rmse_k_real_values = []
+    rmse_s_calc_values = []
+    rmse_s_real_values = []
+    rmse_w_calc_values = []
+    rmse_w_real_values = []
 
-    print "RMSE: %f" % calc_root_mean_squared_error(rmse_real_values, rmse_calc_values)
+    for calc_id, calc_tweet in dict_calc_tweets.iteritems():
+        if calc_id in dict_real_tweets:
+            for key in Tweet.get_k_keys():
+                rmse_k_calc_values.append(calc_tweet[key])
+                rmse_k_real_values.append(dict_real_tweets[calc_id][key])
 
+            for key in Tweet.get_s_keys():
+                rmse_s_calc_values.append(calc_tweet[key])
+                rmse_s_real_values.append(dict_real_tweets[calc_id][key])
+
+            for key in Tweet.get_w_keys():
+                rmse_w_calc_values.append(calc_tweet[key])
+                rmse_w_real_values.append(dict_real_tweets[calc_id][key])
+
+            for key in Tweet.get_all_keys():
+                rmse_calc_values.append(calc_tweet[key])
+                rmse_real_values.append(dict_real_tweets[calc_id][key])
+
+    print "Overall RMSE: %f" % calc_root_mean_squared_error(rmse_real_values, rmse_calc_values)
+    print "K RMSE: %f" % calc_root_mean_squared_error(rmse_k_real_values, rmse_k_calc_values)
+    print "S RMSE: %f" % calc_root_mean_squared_error(rmse_s_real_values, rmse_s_calc_values)
+    print "W RMSE: %f" % calc_root_mean_squared_error(rmse_w_real_values, rmse_w_calc_values)
 
 if __name__ == '__main__':
     analyse_csv(indexer.INDEX_60k_FILTERED_LEMED + ".csv", indexer.TRAININGS_DATA_FILE)
