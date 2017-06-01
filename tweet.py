@@ -9,18 +9,22 @@ class Tweet(dict):
         if len(self) == 0:
             for k in Tweet.get_all_keys():
                 self[k] = 0.0
+            self["id"] = -1
+            self["tweet"] = ""
 
     def get_tweet(self):
         return self["tweet"]
 
     def set_tweet(self, tweet):
         self["tweet"] = tweet
+        return self
 
     def get_id(self):
         return self["id"]
 
     def set_id(self, new_id):
         self["id"] = new_id
+        return self
 
     @staticmethod
     def get_k_keys():
