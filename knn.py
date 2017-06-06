@@ -1,9 +1,9 @@
-import time
-
-import indexer
 from elasticsearch import Elasticsearch
 
 from csv_handling import write_tweets_to_csv, load_tweet_csv
+from filter import get_filter_from_index
+from indexer import TRAININGS_DATA_FILE
+from indices import INDEX_60k_FILTERED_LEMED
 from tweet import Tweet
 
 
@@ -59,10 +59,10 @@ class KNN:
 
 
 if __name__ == '__main__':
-    index = indexer.INDEX_60k_FILTERED_LEMED
+    index = INDEX_60k_FILTERED_LEMED
     knn = KNN(index, Elasticsearch())
-    plain_tweets = load_tweet_csv(indexer.TRAININGS_DATA_FILE, use_pickle=False, use_cache=False)[60000:]
-    filtered_tweets = indexer.get_filter_from_index(index)(plain_tweets)
+    plain_tweets = load_tweet_csv(TRAININGS_DATA_FILE, use_pickle=False, use_cache=False)[60000:]
+    filtered_tweets = get_filter_from_index(index)(plain_tweets)
     k = 11
     i = 0
     calculated_tweets_avg = []
