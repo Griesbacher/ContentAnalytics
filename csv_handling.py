@@ -11,7 +11,7 @@ def load_tweet_csv(filename, use_pickle=True, use_cache=True):
     global csv_cache
     if use_cache and csv_cache is not None:
         return csv_cache
-    pickle_file = "csv_data.p"
+    pickle_file = filename + ".p"
     if use_pickle and os.path.exists(pickle_file):
         data = pickle.load(open(pickle_file, "rb"))
     else:
