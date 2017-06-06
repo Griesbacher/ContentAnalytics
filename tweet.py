@@ -10,6 +10,8 @@ class Tweet(dict):
         if len(self) == 0:
             for k in Tweet.get_all_keys():
                 self[k] = 0.0
+            for k in Tweet.get_all_unknown_keys():
+                self[k] = 1
             self["id"] = -1
             self["tweet"] = ""
 
