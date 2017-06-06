@@ -3,7 +3,7 @@ from elasticsearch import Elasticsearch
 from csv_handling import write_tweets_to_csv, load_tweet_csv
 from filter import get_filter_from_index
 from indexer import TRAININGS_DATA_FILE
-from indices import INDEX_60k_FILTERED_LEMED
+from indices import INDEX_60k_FILTERED_LEMED, INDEX_60k_FILTERED_CERTAIN_LEMED
 from tweet import Tweet
 
 
@@ -138,4 +138,10 @@ Overall      RMSE: 0.183105
 K(kind)      RMSE: 0.155424
 S(sentiment) RMSE: 0.219887
 W(when)      RMSE: 0.223918
+
+--- index_60k_filtered_certain_lemed_weighted_avg_11.csv ---
+Overall      RMSE: 0.207367
+K(kind)      RMSE: 0.188427
+S(sentiment) RMSE: 0.231233
+W(when)      RMSE: 0.240892
 """
