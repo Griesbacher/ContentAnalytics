@@ -4,13 +4,13 @@ import pickle
 
 from tweet import Tweet
 
-csv_cache = None
+csv_cache = dict()
 
 
 def load_tweet_csv(filename, use_pickle=True, use_cache=True):
     global csv_cache
-    if use_cache and csv_cache is not None:
-        return csv_cache
+    if use_cache and filename in csv_cache:
+        return csv_cache[filename]
     pickle_file = filename + ".p"
     if use_pickle and os.path.exists(pickle_file):
         data = pickle.load(open(pickle_file, "rb"))
@@ -35,7 +35,7 @@ def load_tweet_csv(filename, use_pickle=True, use_cache=True):
             if use_pickle:
                 pickle.dump(data, open(pickle_file, "wb"))
     if use_cache:
-        csv_cache = data
+        csv_cache[filename] = data
     return data
 
 
