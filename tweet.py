@@ -3,6 +3,7 @@ import pprint
 
 class Tweet(dict):
     _all_keys = None
+    _all_unknown_keys = None
 
     def __init__(self, *args, **kwargs):
         super(Tweet, self).__init__(*args, **kwargs)
@@ -46,6 +47,24 @@ class Tweet(dict):
             Tweet._all_keys.extend(Tweet.get_k_keys())
             Tweet._all_keys.extend(Tweet.get_w_keys())
         return Tweet._all_keys
+
+    @staticmethod
+    def get_unknown_k_key():
+        return "k7"
+
+    @staticmethod
+    def get_unknown_s_key():
+        return "s1"
+
+    @staticmethod
+    def get_unknown_w_key():
+        return "w3"
+
+    @staticmethod
+    def get_all_unknown_keys():
+        if Tweet._all_unknown_keys is None:
+            Tweet._all_unknown_keys = [Tweet.get_unknown_k_key(), Tweet.get_unknown_s_key(), Tweet.get_unknown_w_key()]
+        return Tweet._all_unknown_keys
 
     def __str__(self):
         return pprint.pformat(self).__str__()
