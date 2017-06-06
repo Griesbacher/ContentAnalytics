@@ -29,6 +29,30 @@ class Tweet(dict):
         self["id"] = new_id
         return self
 
+    def normalize(self):
+        def norm(get_keys_func):
+            values = []
+            for k in get_keys_func():
+                if k in self:
+                    values.append(self[k])
+                else:
+                    values.append(0)
+
+            overall_sum = sum(values)
+            factor = 1.0 / overall_sum
+            for v in range(len(values)):
+                values[v] *= factor
+            return values
+
+        s_values = norm(Tweet.get_s_keys)
+        for i in range(len(Tweet.get_s_keys())):
+            self[Tweet.get_s_keys()[i]] = s_values[i]
+
+        w_values = norm(Tweet.get_s_keys)
+        for i in range(len(Tweet.get_w_keys())):
+            self[Tweet.get_s_keys()[i]] = w_values[i]
+        return self
+
     @staticmethod
     def get_k_keys():
         return ["k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11", "k12", "k13", "k14", "k15"]

@@ -3,7 +3,7 @@ from elasticsearch import Elasticsearch
 from csv_handling import write_tweets_to_csv, load_tweet_csv
 from filter import get_filter_from_index
 from indexer import TRAININGS_DATA_FILE
-from indices import INDEX_60k_FILTERED_LEMED, INDEX_60k_FILTERED_CERTAIN_LEMED
+from indices import INDEX_60k_FILTERED_LEMED
 from tweet import Tweet
 
 
@@ -29,33 +29,30 @@ class KNN:
     @staticmethod
     def avg(weighted_tweets):
         result_tweet = Tweet()
-
-        for tweet in weighted_tweets.values():
-            for key in Tweet.get_all_keys():
-                result_tweet[key] += tweet[key]
-
         if len(weighted_tweets) > 0:
-            # TODO: there are some tweets with no match...
-            for key in Tweet.get_all_keys():
-                result_tweet[key] /= len(weighted_tweets)
+            for tweet in weighted_tweets.values():
+                for key in Tweet.get_all_keys():
+                    result_tweet[key] += tweet[key]
 
-        return result_tweet
+                for key in Tweet.get_all_keys():
+                    result_tweet[key] /= len(weighted_tweets)
+
+        return result_tweet.normalize()
 
     @staticmethod
     def weighted_avg(weighted_tweets):
         result_tweet = Tweet()
-        weights = 0
-        for weight, tweet in weighted_tweets.iteritems():
-            weights += weight
-            for key in Tweet.get_all_keys():
-                result_tweet[key] += weight * tweet[key]
-
         if len(weighted_tweets) > 0:
-            # TODO: there are some tweets with no match...
-            for key in Tweet.get_all_keys():
-                result_tweet[key] /= weights
+            weights = 0
+            for weight, tweet in weighted_tweets.iteritems():
+                weights += weight
+                for key in Tweet.get_all_keys():
+                    result_tweet[key] += weight * tweet[key]
 
-        return result_tweet
+                for key in Tweet.get_all_keys():
+                    result_tweet[key] /= weights
+
+        return result_tweet.normalize()
 
 
 if __name__ == '__main__':
@@ -138,6 +135,12 @@ Overall      RMSE: 0.183105
 K(kind)      RMSE: 0.155424
 S(sentiment) RMSE: 0.219887
 W(when)      RMSE: 0.223918
+
+--- index_60k_filtered_lemed_weighted_avg_11.csv --- Normalised and Default Tweet
+Overall      RMSE: 0.183077
+K(kind)      RMSE: 0.155372
+S(sentiment) RMSE: 0.219946
+W(when)      RMSE: 0.223846
 
 --- index_60k_filtered_certain_lemed_weighted_avg_11.csv ---
 Overall      RMSE: 0.207367
