@@ -2,8 +2,6 @@ import csv
 import os
 import pickle
 
-from sklearn.metrics import mean_squared_error
-
 from tweet import Tweet
 
 csv_cache = None
@@ -51,10 +49,3 @@ def write_tweets_to_csv(tweets, filename):
             line = [t.get_id()]
             for key in Tweet.get_all_keys(): line.append(t[key])
             csv_writer.writerow(line)
-
-
-def calc_root_mean_squared_error(real, calculated):
-    """https://www.kaggle.com/wiki/RootMeanSquaredError"""
-    if len(real) != len(calculated):
-        raise Exception("Both must have the same length")
-    return mean_squared_error(real, calculated) ** 0.5

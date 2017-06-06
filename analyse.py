@@ -1,6 +1,15 @@
+from sklearn.metrics import mean_squared_error
+
 import indexer
-from csv_handling import load_tweet_csv, calc_root_mean_squared_error
+from csv_handling import load_tweet_csv
 from tweet import Tweet
+
+
+def calc_root_mean_squared_error(real, calculated):
+    """https://www.kaggle.com/wiki/RootMeanSquaredError"""
+    if len(real) != len(calculated):
+        raise Exception("Both must have the same length")
+    return mean_squared_error(real, calculated) ** 0.5
 
 
 def analyse_csv(result_csv, train_csv):
