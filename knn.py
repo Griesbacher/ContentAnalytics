@@ -1,9 +1,9 @@
 from elasticsearch import Elasticsearch
 
+import indexer
+import indices
 from csv_handling import write_tweets_to_csv, load_tweet_csv
 from filter import get_filter_from_index
-from indexer import TRAININGS_DATA_FILE
-from indices import INDEX_60k_FILTERED_LEMED
 from tweet import Tweet
 
 
@@ -29,36 +29,37 @@ class KNN:
     @staticmethod
     def avg(weighted_tweets):
         result_tweet = Tweet()
+
+        for tweet in weighted_tweets.values():
+            for key in Tweet.get_all_keys():
+                result_tweet[key] += tweet[key]
+
         if len(weighted_tweets) > 0:
-            for tweet in weighted_tweets.values():
-                for key in Tweet.get_all_keys():
-                    result_tweet[key] += tweet[key]
+            for key in Tweet.get_all_keys():
+                result_tweet[key] /= len(weighted_tweets)
 
-                for key in Tweet.get_all_keys():
-                    result_tweet[key] /= len(weighted_tweets)
-
-        return result_tweet.normalize()
+        return result_tweet
 
     @staticmethod
     def weighted_avg(weighted_tweets):
         result_tweet = Tweet()
-        if len(weighted_tweets) > 0:
-            weights = 0
-            for weight, tweet in weighted_tweets.iteritems():
-                weights += weight
-                for key in Tweet.get_all_keys():
-                    result_tweet[key] += weight * tweet[key]
+        weights = 0
+        for weight, tweet in weighted_tweets.iteritems():
+            weights += weight
+            for key in Tweet.get_all_keys():
+                result_tweet[key] += weight * tweet[key]
 
-                for key in Tweet.get_all_keys():
-                    result_tweet[key] /= weights
+        if len(weighted_tweets) > 0:
+            for key in Tweet.get_all_keys():
+                result_tweet[key] /= weights
 
         return result_tweet.normalize()
 
 
 if __name__ == '__main__':
-    index = INDEX_60k_FILTERED_LEMED
+    index = indices.INDEX_60k_FILTERED_LEMED
     knn = KNN(index, Elasticsearch())
-    plain_tweets = load_tweet_csv(TRAININGS_DATA_FILE, use_pickle=False, use_cache=False)[60000:]
+    plain_tweets = load_tweet_csv(indexer.TRAININGS_DATA_FILE)[60000:]
     filtered_tweets = get_filter_from_index(index)(plain_tweets)
     k = 11
     i = 0
@@ -66,14 +67,14 @@ if __name__ == '__main__':
     calculated_tweets_weighted_avg = []
     for t in filtered_tweets:
         best_tweets = knn.get_best_k(t, k)
-        calculated_tweets_avg.append(knn.avg(best_tweets).set_id(t.get_id()))
+        # calculated_tweets_avg.append(knn.avg(best_tweets).set_id(t.get_id()))
         calculated_tweets_weighted_avg.append(knn.weighted_avg(best_tweets).set_id(t.get_id()))
         i += 1
         if i % 1000 == 0:
             print "KNN analysed %d of %d" % (i, len(filtered_tweets))
 
-    write_tweets_to_csv(calculated_tweets_avg, index + "_avg_%d.csv" % k)
-    write_tweets_to_csv(calculated_tweets_weighted_avg, index + "_weighted_avg_%d.csv" % k)
+    # write_tweets_to_csv(calculated_tweets_avg, index + "_avg_%d.csv" % k)
+    write_tweets_to_csv(calculated_tweets_weighted_avg, index + "_weighted_avg_normed_%d.csv" % k)
 
 """
 --- index_60k_filtered_lemed_avg_3.csv ---
