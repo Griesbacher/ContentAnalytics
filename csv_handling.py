@@ -47,5 +47,5 @@ def write_tweets_to_csv(tweets, filename):
         csv_writer.writerow(header)
         for t in tweets:
             line = [t.get_id()]
-            for key in Tweet.get_all_keys(): line.append("{:.10f}".format(t[key]))
+            for key in Tweet.get_all_keys(): line.append(t[key])
             csv_writer.writerow(line)
