@@ -10,8 +10,6 @@ class Tweet(dict):
         if len(self) == 0:
             for k in Tweet.get_all_keys():
                 self[k] = 0.0
-            for k in Tweet.get_all_unknown_keys():
-                self[k] = 1
             self["id"] = -1
             self["tweet"] = ""
 
@@ -39,6 +37,8 @@ class Tweet(dict):
                     values.append(0)
 
             overall_sum = sum(values)
+            if overall_sum == 0:
+                return values
             factor = 1.0 / overall_sum
             for v in range(len(values)):
                 values[v] *= factor
@@ -70,8 +70,8 @@ class Tweet(dict):
         if Tweet._all_keys is None:
             Tweet._all_keys = []
             Tweet._all_keys.extend(Tweet.get_s_keys())
-            Tweet._all_keys.extend(Tweet.get_k_keys())
             Tweet._all_keys.extend(Tweet.get_w_keys())
+            Tweet._all_keys.extend(Tweet.get_k_keys())
         return Tweet._all_keys
 
     @staticmethod
