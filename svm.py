@@ -19,7 +19,7 @@ class SVM:
     def get_term_vector(self, tweet):
         # type: (Tweet) -> dict
         """
-        Retrieve a term vector from elsatic search
+        Retrieve a term vector from elastic search
         :param tweet: the tweet to get the term vector for
         :return: a dictionary with terms as keys and their count as values
         """
@@ -106,7 +106,7 @@ class SVM:
 
 if __name__ == '__main__':
     normalize = True
-    trainigSetSize = 5000  # up to 60000 possible
+    trainigSetSize = 20000  # up to 60000 possible
     index = INDEX_60k_FILTERED
     svm_classifier = SVM(index, Elasticsearch())
     print "SVM learning..."
@@ -153,4 +153,16 @@ Overall      RMSE: 0.224530
 K(kind)      RMSE: 0.146955 <- still improvement! This seems to work well!
 S(sentiment) RMSE: 0.314136
 W(when)      RMSE: 0.313282 <- at least not worse...
+
+--- index_60k_filtered_svm_10000_normcls.csv --- with 10000 training tweets and normalizing the classes
+Overall      RMSE: 0.221429
+K(kind)      RMSE: 0.145574
+S(sentiment) RMSE: 0.306823
+W(when)      RMSE: 0.311512
+
+--- index_60k_filtered_svm_20000_normcls.csv --- with 20000 training tweets and normalizing the classes
+Overall      RMSE: 0.217452
+K(kind)      RMSE: 0.144079
+S(sentiment) RMSE: 0.299260
+W(when)      RMSE: 0.306466
 """
