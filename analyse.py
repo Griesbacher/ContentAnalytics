@@ -12,16 +12,19 @@ def calc_root_mean_squared_error(real, calculated):
     return mean_squared_error(real, calculated) ** 0.5
 
 
+def create_dict_from_tweets(tweets):
+    dictionary = {}
+    for tweet in tweets:
+        dictionary[tweet.get_id()] = tweet
+    return dictionary
+
+
 def analyse_csv(result_csv, train_csv):
     calc_tweets = load_tweet_csv(filename=result_csv, use_cache=False, use_pickle=False)
     real_tweets = load_tweet_csv(filename=train_csv)
 
-    dict_calc_tweets = {}
-    dict_real_tweets = {}
-    for tweet in calc_tweets:
-        dict_calc_tweets[tweet.get_id()] = tweet
-    for tweet in real_tweets:
-        dict_real_tweets[tweet.get_id()] = tweet
+    dict_calc_tweets = create_dict_from_tweets(calc_tweets)
+    dict_real_tweets = create_dict_from_tweets(real_tweets)
 
     rmse_calc_values = []
     rmse_real_values = []
@@ -60,6 +63,4 @@ def analyse_csv(result_csv, train_csv):
 
 
 if __name__ == '__main__':
-    for i in range(3, 10, 2):
-        analyse_csv(indexer.INDEX_60k_FILTERED_LEMED + "_avg_%d.csv" % i, indexer.TRAININGS_DATA_FILE)
-        analyse_csv(indexer.INDEX_60k_FILTERED_LEMED + "_weighted_avg_%d.csv" % i, indexer.TRAININGS_DATA_FILE)
+    analyse_csv("index_60k_filtered_lemed_weighted_avg_tense_11.csv", indexer.TRAININGS_DATA_FILE)
