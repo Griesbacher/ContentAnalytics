@@ -48,9 +48,9 @@ class Tweet(dict):
         for i in range(len(Tweet.get_s_keys())):
             self[Tweet.get_s_keys()[i]] = s_values[i]
 
-        w_values = norm(Tweet.get_s_keys)
+        w_values = norm(Tweet.get_w_keys)
         for i in range(len(Tweet.get_w_keys())):
-            self[Tweet.get_s_keys()[i]] = w_values[i]
+            self[Tweet.get_w_keys()[i]] = w_values[i]
         return self
 
     @staticmethod
