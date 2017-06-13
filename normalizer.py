@@ -8,6 +8,8 @@ import string
 
 
 # nltk.download('punkt')
+# nltk.download('averaged_perceptron_tagger')
+
 
 class Normalizer:
     _st = nltk.stem.porter.PorterStemmer()
