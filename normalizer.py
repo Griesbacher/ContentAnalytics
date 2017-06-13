@@ -1,6 +1,11 @@
 import traceback
 
-import enchant
+try:
+    import enchant
+
+    enchant_enabled = True
+except Exception:
+    enchant_enabled = False
 import re
 import sys
 import nltk
@@ -14,7 +19,8 @@ import string
 class Normalizer:
     _st = nltk.stem.porter.PorterStemmer()
     _wln = nltk.WordNetLemmatizer()
-    _spell_dict = enchant.Dict("en_US")
+    if enchant_enabled:
+        _spell_dict = enchant.Dict("en_US")
     _max_dist = 3
     __regex_search = r'(\w)\1{2,}'
     __regex_replace_single = r'\1'
@@ -58,15 +64,17 @@ class Normalizer:
 
     @staticmethod
     def init(dict_name, max_dist):
-        Normalizer._spell_dict = enchant.Dict(dict_name)
+        if enchant_enabled:
+            Normalizer._spell_dict = enchant.Dict(dict_name)
         Normalizer._max_dist = max_dist
 
     @staticmethod
     def _dictionary_lookup(word):
-        for s in Normalizer._spell_dict.suggest(word):
-            d = nltk.edit_distance(word, s)
-            if d < Normalizer._max_dist:
-                return s, d
+        if enchant_enabled:
+            for s in Normalizer._spell_dict.suggest(word):
+                d = nltk.edit_distance(word, s)
+                if d < Normalizer._max_dist:
+                    return s, d
 
         return word, sys.maxint
 
@@ -80,7 +88,10 @@ class Normalizer:
 
     @staticmethod
     def is_valid_word(word):
-        return Normalizer._spell_dict.check(word)
+        if enchant_enabled:
+            return Normalizer._spell_dict.check(word)
+        else:
+            return False
 
     @staticmethod
     def autocorrect_sentence(sentence):
