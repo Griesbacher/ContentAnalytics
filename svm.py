@@ -1,9 +1,11 @@
 from sklearn import svm
 
+import multiprocessing
+
 from csv_handling import load_tweet_csv, write_tweets_to_csv
 from filter import get_filter_from_index
 from indexer import TRAININGS_DATA_FILE
-from indices import INDEX_60k_FILTERED
+from indices import INDEX_60k_FILTERED, INDEX_ALL_FILTERED_LEMED
 from tweet import Tweet
 from elasticsearch import Elasticsearch
 
@@ -104,9 +106,16 @@ class SVM:
         return tweet
 
 
+def classify_tweet(tweet):
+    tweet = svm_classifier.classify(tweet)
+    if normalize:
+        tweet.normalize()
+    return tweet
+
+
 if __name__ == '__main__':
     normalize = True
-    trainigSetSize = 20000  # up to 60000 possible
+    trainigSetSize = 1000  # up to 60000 possible
     index = INDEX_60k_FILTERED
     svm_classifier = SVM(index, Elasticsearch())
     print "SVM learning..."
@@ -116,18 +125,13 @@ if __name__ == '__main__':
     print "SVM classifying..."
     plain_tweets = load_tweet_csv(TRAININGS_DATA_FILE, use_pickle=False, use_cache=False)[60000:]
     filtered_tweets = get_filter_from_index(index)(plain_tweets)
-    i = 0
-    calculated_tweets = []
-    for t in filtered_tweets:
-        t = svm_classifier.classify(t)
-        if normalize:
-            t.normalize()
-        calculated_tweets.append(t)
-        i += 1
-        if i % 1000 == 0:
-            print "SVM analysed %d of %d" % (i, len(filtered_tweets))
 
-    write_tweets_to_csv(calculated_tweets, "{}_svm_{}{}.csv".format(index, trainigSetSize, "_normcls" if normalize else ""))
+    calculated_tweets = []
+    pool = multiprocessing.Pool()
+    calculated_tweets = pool.map(classify_tweet, filtered_tweets)
+
+    write_tweets_to_csv(calculated_tweets,
+                        "{}_svm_{}{}.csv".format(index, trainigSetSize, "_normcls" if normalize else ""))
 
 """
 --- index_60k_filtered_svm_1000.csv --- with 1000 training tweets and without normalizing the classes
