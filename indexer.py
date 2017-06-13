@@ -12,7 +12,7 @@ def index_data(tweets, index_name="train"):
     es.indices.delete(index=index_name, ignore=[400, 404])
     i = 0
     for tweet in tweets:
-        es.index(index=index_name, doc_type='tweet', body=tweet)
+        es.index(index=index_name, doc_type='tweet', body=tweet, id=tweet.get_id())
         i += 1
         if i % 1000 == 0:
             print "Indexed %i of %i" % (i, len(tweets))
