@@ -54,11 +54,20 @@ def analyse_csv(result_csv, train_csv):
                 rmse_calc_values.append(calc_tweet[key])
                 rmse_real_values.append(dict_real_tweets[calc_id][key])
 
+    overall = calc_root_mean_squared_error(rmse_real_values, rmse_calc_values)
+    kind = calc_root_mean_squared_error(rmse_k_real_values, rmse_k_calc_values)
+    sentiment = calc_root_mean_squared_error(rmse_s_real_values, rmse_s_calc_values)
+    when = calc_root_mean_squared_error(rmse_w_real_values, rmse_w_calc_values)
+
     print "--- %s ---" % result_csv
-    print "Overall      RMSE: %f" % calc_root_mean_squared_error(rmse_real_values, rmse_calc_values)
-    print "K(kind)      RMSE: %f" % calc_root_mean_squared_error(rmse_k_real_values, rmse_k_calc_values)
-    print "S(sentiment) RMSE: %f" % calc_root_mean_squared_error(rmse_s_real_values, rmse_s_calc_values)
-    print "W(when)      RMSE: %f" % calc_root_mean_squared_error(rmse_w_real_values, rmse_w_calc_values)
+    print "Overall      RMSE: %f" % overall
+    print "K(kind)      RMSE: %f" % kind
+    print "S(sentiment) RMSE: %f" % sentiment
+    print "W(when)      RMSE: %f" % when
+    print
+    print "| # Tweets | Gesamt RMSE | Kind | Sentiment | When |"
+    print "|----------|-------------|------|-----------|------|"
+    print "| %d | %f | %f | %f | %f |" % (len(calc_tweets), overall, kind, sentiment, when)
     print
 
 
