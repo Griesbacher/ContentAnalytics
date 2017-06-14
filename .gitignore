@@ -105,3 +105,4 @@ ENV/
 *.p
 *.csv
 .idea
+nohup.out
