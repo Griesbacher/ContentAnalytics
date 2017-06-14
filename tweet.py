@@ -14,20 +14,25 @@ class Tweet(dict):
             self["tweet"] = ""
 
     def get_tweet(self):
+        # type: (None) -> str
         return self["tweet"]
 
     def set_tweet(self, tweet):
+        # type: (str) -> Tweet
         self["tweet"] = tweet
         return self
 
     def get_id(self):
+        # type: (None) -> int
         return self["id"]
 
     def set_id(self, new_id):
+        # type: (int) -> Tweet
         self["id"] = new_id
         return self
 
     def normalize(self):
+        # type: (Tweet) -> Tweet
         def norm(get_keys_func):
             values = []
             for k in get_keys_func():
@@ -55,18 +60,22 @@ class Tweet(dict):
 
     @staticmethod
     def get_k_keys():
+        # type: (None) -> list
         return ["k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11", "k12", "k13", "k14", "k15"]
 
     @staticmethod
     def get_s_keys():
+        # type: (None) -> list
         return ["s1", "s2", "s3", "s4", "s5"]
 
     @staticmethod
     def get_w_keys():
+        # type: (None) -> list
         return ["w1", "w2", "w3", "w4"]
 
     @staticmethod
     def get_all_keys():
+        # type: (None) -> list
         if Tweet._all_keys is None:
             Tweet._all_keys = []
             Tweet._all_keys.extend(Tweet.get_s_keys())
