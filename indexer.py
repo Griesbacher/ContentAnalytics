@@ -64,6 +64,20 @@ def index_60k_filtered_spelled_lemed(tweets):
                indices.INDEX_60k_FILTERED_SPELLED_LEMED)
 
 
+def index_everything(tweets):
+    index_60k_filtered_stemed(tweets)
+    index_60k_filtered_lemed(tweets)
+    index_60k_filtered(tweets)
+    index_60k_filtered_certain_lemed(tweets)
+    index_60k_filtered_spelled_lemed(tweets)
+
+    index_all_filtered_stemed(tweets)
+    index_all_filtered_lemed(tweets)
+    index_all_filtered_certain_lemed(tweets)
+    index_all_filtered(tweets)
+    index_all_filtered_spelled_lemed(tweets)
+
+
 if __name__ == '__main__':
     es = Elasticsearch()
 
