@@ -1,3 +1,5 @@
+from os import listdir
+
 from sklearn.metrics import mean_squared_error
 
 import indexer
@@ -7,8 +9,8 @@ from tweet import Tweet
 
 def calc_root_mean_squared_error(real, calculated):
     """https://www.kaggle.com/wiki/RootMeanSquaredError"""
-    if len(real) != len(calculated):
-        raise Exception("Both must have the same length")
+    if len(real) != len(calculated) or len(real) == 0:
+        raise Exception("Both must have the same length and not zero")
     return mean_squared_error(real, calculated) ** 0.5
 
 
@@ -65,11 +67,29 @@ def analyse_csv(result_csv, train_csv):
     print "S(sentiment) RMSE: %f" % sentiment
     print "W(when)      RMSE: %f" % when
     print
-    print "| # Tweets | Gesamt RMSE | Kind | Sentiment | When |"
-    print "|----------|-------------|------|-----------|------|"
-    print "| %d | %f | %f | %f | %f |" % (len(calc_tweets), overall, kind, sentiment, when)
+    print "| File |Gesamt RMSE | Kind | Sentiment | When |"
+    print "|------|------------|------|-----------|------|"
+    print "| %s | %f | %f | %f | %f |" % (result_csv, overall, kind, sentiment, when)
     print
 
 
+def find_csv_filenames(path_to_dir, suffix=".csv"):
+    """https://stackoverflow.com/questions/9234560/find-all-csv-files-in-a-directory-using-python"""
+    filenames = listdir(path_to_dir)
+    return [filename for filename in filenames if filename.endswith(suffix)]
+
+
+def analyse_all():
+    files = find_csv_filenames(".")
+    files.pop(files.index(indexer.TRAININGS_DATA_FILE))
+    files.pop(files.index(indexer.TEST_DATA_FILE))
+    for csv_file in files:
+        try:
+            analyse_csv(csv_file, indexer.TRAININGS_DATA_FILE)
+        except Exception as e:
+            print e.message
+
+
 if __name__ == '__main__':
-    analyse_csv("index_60k_filtered_lemed_weighted_avg_tense_11.csv", indexer.TRAININGS_DATA_FILE)
+    analyse_all()
+    # analyse_csv("index_60k_filtered_lemed_weighted_avg_tense_11.csv", indexer.TRAININGS_DATA_FILE)
