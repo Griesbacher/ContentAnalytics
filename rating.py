@@ -1,10 +1,11 @@
 import nltk
 import re
+import pprint
+
 import indexer
 from csv_handling import load_tweet_csv
 from normalizer import Normalizer
 from nltk.corpus import wordnet
-
 from tweet import Tweet
 
 
@@ -20,6 +21,22 @@ class Rater:
                           [word.lemma_names() for word in wordnet.synsets("yesterday")]
                           + [word.lemma_names() for word in wordnet.synsets("past")]
                           for item in sublist])
+    _kind_keywords = {
+        "k1": "clouds",
+        "k2": "cold",
+        "k3": "dry",
+        "k4": "hot",
+        "k5": "humid",
+        "k6": "hurricane",
+        "k8": "ice",
+        "k10": "rain",
+        "k11": "snow",
+        "k12": "storms",
+        "k13": "sun",
+        "k14": "tornado",
+        "k15": "wind",
+    }
+    _kind_synonymes = dict()
 
     @staticmethod
     # type: (str) -> dict
@@ -107,6 +124,23 @@ class Rater:
                       'w3': 0.04577870150435465,
                       'w4': 0.0016444972288202691})
 
+    @staticmethod
+    def rate_kind(tweet):
+        # type: (Tweet) -> Tweet
+        """Rates the kind values, this can lead to k values > 1, therefore normalize would be appropriate"""
+        if len(Rater._kind_synonymes) == 0:
+            for key, value in Rater._kind_keywords.iteritems():
+                Rater._kind_synonymes[key] = set([word for word in wordnet.synsets(value)[0].lemma_names()])
+
+        for token in Normalizer.tokenize(tweet.get_tweet()):
+            for key, keywords in Rater._kind_synonymes.iteritems():
+                for keyword in keywords:
+                    if nltk.edit_distance(token, keyword) < 2:
+                        if key not in tweet:
+                            tweet[key] = 0
+                        tweet[key] += 0.5
+        return tweet
+
 
 def analyse_weather_tweets():
     plain_tweets = load_tweet_csv(indexer.TRAININGS_DATA_FILE)
@@ -121,6 +155,10 @@ def analyse_weather_tweets():
 
 
 if __name__ == '__main__':
+    print Rater.rate_kind(Tweet({
+        "tweet": "With the snow forecast for Tahoe this weekend, maybe the @mention riders need to bust out the 'Cross bikes :) @mention"
+    }))
+
     # future
     print Rater.determine_tense_input(
         "With the snow forecast for Tahoe this weekend, maybe the @mention riders need to bust out the 'Cross bikes :) @mention")
