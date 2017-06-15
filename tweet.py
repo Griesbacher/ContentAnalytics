@@ -56,6 +56,13 @@ class Tweet(dict):
         w_values = norm(Tweet.get_w_keys)
         for i in range(len(Tweet.get_w_keys())):
             self[Tweet.get_w_keys()[i]] = w_values[i]
+
+        for k in Tweet.get_k_keys():
+            if self[k] > 1:
+                self[k] = 1
+            elif self[k] < 0:
+                self[k] = 0
+
         return self
 
     @staticmethod
