@@ -1,5 +1,6 @@
 from os import listdir
 
+import re
 from sklearn.metrics import mean_squared_error
 
 import indexer
@@ -21,7 +22,12 @@ def create_dict_from_tweets(tweets):
     return dictionary
 
 
-def analyse_csv(result_csv, train_csv):
+MODE_HUMAN = 1
+MODE_MARKDOWN = 2
+MODE_MARKDOWN_ALL = 3
+
+
+def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN):
     calc_tweets = load_tweet_csv(filename=result_csv, use_cache=False, use_pickle=False)
     real_tweets = load_tweet_csv(filename=train_csv)
 
@@ -61,16 +67,20 @@ def analyse_csv(result_csv, train_csv):
     sentiment = calc_root_mean_squared_error(rmse_s_real_values, rmse_s_calc_values)
     when = calc_root_mean_squared_error(rmse_w_real_values, rmse_w_calc_values)
 
-    print "--- %s ---" % result_csv
-    print "Overall      RMSE: %f" % overall
-    print "K(kind)      RMSE: %f" % kind
-    print "S(sentiment) RMSE: %f" % sentiment
-    print "W(when)      RMSE: %f" % when
-    print
-    print "| File |Gesamt RMSE | Kind | Sentiment | When |"
-    print "|------|------------|------|-----------|------|"
-    print "| %s | %f | %f | %f | %f |" % (result_csv, overall, kind, sentiment, when)
-    print
+    if mode == MODE_HUMAN:
+        print "--- %s ---" % result_csv
+        print "Overall      RMSE: %f" % overall
+        print "K(kind)      RMSE: %f" % kind
+        print "S(sentiment) RMSE: %f" % sentiment
+        print "W(when)      RMSE: %f" % when
+        print
+    elif mode == MODE_MARKDOWN:
+        print "| File | Gesamt RMSE | Kind | Sentiment | When |"
+        print "|------|------------|------|-----------|------|"
+        print "| %s | %f | %f | %f | %f |" % (result_csv, overall, kind, sentiment, when)
+        print
+    elif mode == MODE_MARKDOWN_ALL:
+        print "| %s | %f | %f | %f | %f |" % (result_csv, overall, kind, sentiment, when)
 
 
 def find_csv_filenames(path_to_dir, suffix=".csv"):
@@ -79,13 +89,20 @@ def find_csv_filenames(path_to_dir, suffix=".csv"):
     return [filename for filename in filenames if filename.endswith(suffix)]
 
 
+def natural_sort(l):
+    """https://stackoverflow.com/questions/4836710/does-python-have-a-built-in-function-for-string-natural-sort"""
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(l, key=alphanum_key)
+
+
 def analyse_all():
     files = find_csv_filenames(".")
     files.pop(files.index(indexer.TRAININGS_DATA_FILE))
     files.pop(files.index(indexer.TEST_DATA_FILE))
-    for csv_file in files:
+    for csv_file in natural_sort(files):
         try:
-            analyse_csv(csv_file, indexer.TRAININGS_DATA_FILE)
+            analyse_csv(csv_file, indexer.TRAININGS_DATA_FILE, MODE_MARKDOWN_ALL)
         except Exception as e:
             print e.message
 
