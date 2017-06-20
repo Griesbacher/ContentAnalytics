@@ -15,11 +15,11 @@ class SVM:
         # type: (str, Elasticsearch) -> None
         self._index = index
         self._es = es
-        self.separate_sw = separate_sw
+        self._separate_sw = separate_sw
         if separate_sw:
             self._kclassifiers = {key: svm.LinearSVC() for key in Tweet.get_k_keys()}
-            self.sclassifier = svm.LinearSVC()
-            self.wclassifier = svm.LinearSVC()
+            self._sclassifier = svm.LinearSVC()
+            self._wclassifier = svm.LinearSVC()
         else:
             self._classifiers = {key: svm.LinearSVC() for key in Tweet.get_all_keys()}
         self._vocabulary = []
@@ -87,7 +87,7 @@ class SVM:
         for tweet_id in termvectors:
             termvectors[tweet_id] = self.get_support_vector(termvectors[tweet_id])
 
-        if self.separate_sw:
+        if self._separate_sw:
             # fit k classifiers
             for tweet_class, classifier in self._kclassifiers.iteritems():
                 if verbose:
@@ -101,11 +101,11 @@ class SVM:
             # fit s classifier
             if verbose:
                 print "Preparing classifier for s classes"
-            self.fit_multi_classes(termvectors, tweets, Tweet.get_s_keys(), self.sclassifier)
+            self.fit_multi_classes(termvectors, tweets, Tweet.get_s_keys(), self._sclassifier)
             # fit w classifier
             if verbose:
                 print "Preparing classifier for w classes"
-            self.fit_multi_classes(termvectors, tweets, Tweet.get_w_keys(), self.wclassifier)
+            self.fit_multi_classes(termvectors, tweets, Tweet.get_w_keys(), self._wclassifier)
         else:
             # fit each svm classifier
             for tweet_class, classifier in self._classifiers.iteritems():
@@ -136,13 +136,17 @@ class SVM:
         """
         # type: (Tweet) -> Tweet
         term_vectors = self.get_support_vector(self.get_term_vector(tweet))
-        if self.separate_sw:
+        if self._separate_sw:
             for tweet_class, clf in self._kclassifiers.iteritems():
                 class_result = int(self._kclassifiers[tweet_class].predict([term_vectors]).tolist()[0])
                 tweet[tweet_class] = class_result
-            sclass = self.sclassifier.predict([term_vectors]).tolist()[0]
+            for cls in Tweet.get_s_keys():
+                tweet[cls] = 0.0
+            for cls in Tweet.get_w_keys():
+                tweet[cls] = 0.0
+            sclass = self._sclassifier.predict([term_vectors]).tolist()[0]
             tweet[sclass] = 1.0
-            wclass = self.wclassifier.predict([term_vectors]).tolist()[0]
+            wclass = self._wclassifier.predict([term_vectors]).tolist()[0]
             tweet[wclass] = 1.0
         else:
             for tweet_class, clf in self._classifiers.iteritems():
@@ -173,8 +177,9 @@ if __name__ == '__main__':
     filtered_tweets = get_filter_from_index(index)(plain_tweets)
 
     calculated_tweets = []
-    pool = multiprocessing.Pool()
-    calculated_tweets = pool.map(classify_tweet, filtered_tweets)
+    #pool = multiprocessing.Pool()
+    #calculated_tweets = pool.map(classify_tweet, filtered_tweets)
+    calculated_tweets = map(classify_tweet, filtered_tweets)
 
     write_tweets_to_csv(calculated_tweets,
                         "{}_svm_{}{}{}.csv".format(index, trainigSetSize, "_normcls" if normalize else "", "_sepsw" if separate_sw else ""))
