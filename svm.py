@@ -11,11 +11,17 @@ from elasticsearch import Elasticsearch
 
 
 class SVM:
-    def __init__(self, index, es):
+    def __init__(self, index, es, separate_sw=False):
         # type: (str, Elasticsearch) -> None
         self._index = index
         self._es = es
-        self._classifiers = {key: svm.LinearSVC() for key in Tweet.get_all_keys()}
+        self.separate_sw = separate_sw
+        if separate_sw:
+            self._kclassifiers = {key: svm.LinearSVC() for key in Tweet.get_k_keys()}
+            self.sclassifier = svm.LinearSVC()
+            self.wclassifier = svm.LinearSVC()
+        else:
+            self._classifiers = {key: svm.LinearSVC() for key in Tweet.get_all_keys()}
         self._vocabulary = []
 
     def get_term_vector(self, tweet):
@@ -58,7 +64,7 @@ class SVM:
     def learn(self, tweets, verbose=False):
         # type: (list, bool) -> None
         """
-        Learn how to classify tweets with a list of labled example tweets
+        Learn how to classify tweets with a list of labeled example tweets
         :param tweets: the list of tweets to learn from
         :param verbose: print extra information to console, if set to true
         """
@@ -81,16 +87,46 @@ class SVM:
         for tweet_id in termvectors:
             termvectors[tweet_id] = self.get_support_vector(termvectors[tweet_id])
 
-        # fit each svm classifier
-        for tweet_class, classifier in self._classifiers.iteritems():
+        if self.separate_sw:
+            # fit k classifiers
+            for tweet_class, classifier in self._kclassifiers.iteritems():
+                if verbose:
+                    print "Preparing classifier for {tweet_class}".format(tweet_class=tweet_class)
+                fit_support_vectors = []
+                fit_classes = []
+                for tweet in tweets:
+                    fit_support_vectors.append(termvectors[tweet.get_id()])
+                    fit_classes.append(1 if tweet[tweet_class] > 0.5 else 0)
+                classifier.fit(fit_support_vectors, fit_classes)
+            # fit s classifier
             if verbose:
-                print "Preparing classifier for for {tweet_class}".format(tweet_class=tweet_class)
-            fit_support_vectors = []
-            fit_classes = []
-            for tweet in tweets:
-                fit_support_vectors.append(termvectors[tweet.get_id()])
-                fit_classes.append(1 if tweet[tweet_class] > 0.5 else 0)
-            classifier.fit(fit_support_vectors, fit_classes)
+                print "Preparing classifier for s classes"
+            self.fit_multi_classes(termvectors, tweets, Tweet.get_s_keys(), self.sclassifier)
+            # fit w classifier
+            if verbose:
+                print "Preparing classifier for w classes"
+            self.fit_multi_classes(termvectors, tweets, Tweet.get_w_keys(), self.wclassifier)
+        else:
+            # fit each svm classifier
+            for tweet_class, classifier in self._classifiers.iteritems():
+                if verbose:
+                    print "Preparing classifier for {tweet_class}".format(tweet_class=tweet_class)
+                fit_support_vectors = []
+                fit_classes = []
+                for tweet in tweets:
+                    fit_support_vectors.append(termvectors[tweet.get_id()])
+                    fit_classes.append(1 if tweet[tweet_class] > 0.5 else 0)
+                classifier.fit(fit_support_vectors, fit_classes)
+
+    @staticmethod
+    def fit_multi_classes(termvectors, tweets, classes, classifier):
+        fit_support_vectors = []
+        fit_classes = []
+        for tweet in tweets:
+            best_class = sorted([(clazz, tweet[clazz]) for clazz in classes], key=lambda x: x[1])[0][0]
+            fit_support_vectors.append(termvectors[tweet.get_id()])
+            fit_classes.append(best_class)
+        classifier.fit(fit_support_vectors, fit_classes)
 
     def classify(self, tweet):
         """
@@ -100,9 +136,18 @@ class SVM:
         """
         # type: (Tweet) -> Tweet
         term_vectors = self.get_support_vector(self.get_term_vector(tweet))
-        for tweet_class, clf in self._classifiers.iteritems():
-            class_result = int(self._classifiers[tweet_class].predict([term_vectors]).tolist()[0])
-            tweet[tweet_class] = class_result
+        if self.separate_sw:
+            for tweet_class, clf in self._kclassifiers.iteritems():
+                class_result = int(self._kclassifiers[tweet_class].predict([term_vectors]).tolist()[0])
+                tweet[tweet_class] = class_result
+            sclass = self.sclassifier.predict([term_vectors]).tolist()[0]
+            tweet[sclass] = 1.0
+            wclass = self.wclassifier.predict([term_vectors]).tolist()[0]
+            tweet[wclass] = 1.0
+        else:
+            for tweet_class, clf in self._classifiers.iteritems():
+                class_result = int(self._classifiers[tweet_class].predict([term_vectors]).tolist()[0])
+                tweet[tweet_class] = class_result
         return tweet
 
 
@@ -115,9 +160,10 @@ def classify_tweet(tweet):
 
 if __name__ == '__main__':
     normalize = True
-    trainigSetSize = 1000  # up to 60000 possible
+    separate_sw = True
+    trainigSetSize = 5000  # up to 60000 possible
     index = INDEX_60k_FILTERED
-    svm_classifier = SVM(index, Elasticsearch())
+    svm_classifier = SVM(index, Elasticsearch(), separate_sw)
     print "SVM learning..."
     plain_learn_tweets = load_tweet_csv(TRAININGS_DATA_FILE, use_pickle=False, use_cache=False)[:trainigSetSize]
     filtered_learn_tweets = get_filter_from_index(index)(plain_learn_tweets)
@@ -131,7 +177,7 @@ if __name__ == '__main__':
     calculated_tweets = pool.map(classify_tweet, filtered_tweets)
 
     write_tweets_to_csv(calculated_tweets,
-                        "{}_svm_{}{}.csv".format(index, trainigSetSize, "_normcls" if normalize else ""))
+                        "{}_svm_{}{}{}.csv".format(index, trainigSetSize, "_normcls" if normalize else "", "_sepsw" if separate_sw else ""))
 
 """
 --- index_60k_filtered_svm_1000.csv --- with 1000 training tweets and without normalizing the classes
