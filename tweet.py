@@ -12,6 +12,9 @@ class Tweet(dict):
                 self[k] = 0.0
             self["id"] = -1
             self["tweet"] = ""
+        else:
+            if "tweet" in self and isinstance(self["tweet"], unicode):
+                self["tweet"] = self["tweet"].encode('ascii', 'ignore')
 
     def get_tweet(self):
         # type: (None) -> str
@@ -64,6 +67,10 @@ class Tweet(dict):
                 self[k] = 0
 
         return self
+
+    def __add__(self, other):
+        for k in Tweet.get_all_keys():
+            self[k] += other[k]
 
     @staticmethod
     def get_k_keys():
