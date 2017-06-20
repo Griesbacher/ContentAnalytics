@@ -1,9 +1,9 @@
 import nltk
 import re
-import pprint
 
 import indexer
-from csv_handling import load_tweet_csv
+from analyse import create_dict_from_tweets
+from csv_handling import load_tweet_csv, write_tweets_to_csv
 from normalizer import Normalizer
 from nltk.corpus import wordnet
 from tweet import Tweet
@@ -39,8 +39,8 @@ class Rater:
     _kind_synonymes = dict()
 
     @staticmethod
-    # type: (str) -> dict
     def determine_tense_input(text):
+        # type: (str) -> dict
         tokens = Normalizer.tokenize(text)
         tagged = nltk.pos_tag(tokens)
 
@@ -70,6 +70,17 @@ class Rater:
         return tweet
 
     @staticmethod
+    def is_weather_tweet(tweet):
+        # type: (Tweet) -> (bool, list)
+        match = re.findall(
+            r'#WEATHER:\s+\d{1,2}:\d{1,2} .m\s*\w?:\s(\d{1,}\.\d{1,}F)\.\sFeels\s(\d+)?F\.\s(\d{1,}\.\d{1,2})?%\sHumidity\.\s(\d{1,}\.\d{1,})?MPH\s(\w+)?\sWind\.',
+            tweet.get_tweet())
+        if match:
+            return True, match
+        else:
+            return False, match
+
+    @staticmethod
     def weather_tag_posts(tweet):
         # type: (Tweet) -> Tweet
         """
@@ -80,7 +91,7 @@ class Rater:
             vs.
             #WEATHER: 12:53 pm : 84.0F. Feels F. 29.90% Humidity. 11.5MPH South Wind. 	k15: 0.382
             --> Wind is two times stronger but just a third in the rating...
-            Other informations are also very inconsistent, the last 7 entries for example:
+            Other information are also very inconsistent, the last 7 entries for example:
                                                                                             Cold / Hot / humid
             #WEATHER: 5:53 am E: 66.0F. Feels F. 29.99% Humidity. 0.0MPH North Wind. 	    [0.206, 0.0, 0.0]
             #WEATHER:  7:53 am : 60.0F. Feels 60F. 29.82% Humidity. 4.6MPH Northwest Wind. 	[0.0, 0.0, 1.0]
@@ -92,10 +103,7 @@ class Rater:
         :param tweet: the tweet
         :returns an tweet if matching tweet or None
         """
-        match = re.findall(
-            r'#WEATHER:\s+\d{1,2}:\d{1,2} .m\s*\w?:\s(\d{1,}\.\d{1,}F)\.\sFeels\s(\d+)?F\.\s(\d{1,}\.\d{1,2})?%\sHumidity\.\s(\d{1,}\.\d{1,})?MPH\s(\w+)?\sWind\.',
-            tweet.get_tweet())
-        if not match:
+        if not Rater.is_weather_tweet(tweet)[0]:
             return None
         return Tweet({'id': tweet.get_id(),
                       'k1': 0.00024505146476642915,
@@ -142,19 +150,35 @@ class Rater:
         return tweet
 
 
+def post_rate_weather(result_file, raw_file):
+    # type: (str, str) -> None
+    result_tweets = load_tweet_csv(result_file)
+    raw_tweets = load_tweet_csv(raw_file)
+    raw_dict = create_dict_from_tweets(raw_tweets)
+    result = []
+    for tweet in result_tweets:
+        if tweet.get_id() in raw_dict:
+            tweet.set_tweet(raw_dict[tweet.get_id()].get_tweet())
+            new_tweet = Rater.weather_tag_posts(tweet)
+        if new_tweet:
+            result.append(new_tweet)
+        else:
+            result.append(tweet)
+    new_result_file = result_file[:-3] + "weather_rated.csv"
+    write_tweets_to_csv(result, new_result_file)
+
+
 def analyse_weather_tweets():
     plain_tweets = load_tweet_csv(indexer.TRAININGS_DATA_FILE)
     all_tweets = dict()
     for tweet in plain_tweets:
-        match_b = re.findall(
-            r'#WEATHER:\s+\d{1,2}:\d{1,2} .m\s*\w?:\s(\d{1,}\.\d{1,}F)\.\sFeels\s(\d+)?F\.\s(\d{1,}\.\d{1,2})?%\sHumidity\.\s(\d{1,}\.\d{1,})?MPH\s(\w+)?\sWind\.',
-            tweet.get_tweet())
-        if match_b:
+        is_weather, match = Rater.is_weather_tweet(tweet)
+        if is_weather:
             print tweet.get_tweet(), "\t", [tweet[k] for k in ["k2", "k4", "k5"]]
             all_tweets[str(tweet.get_id())] = tweet
 
 
-if __name__ == '__main__':
+def demo():
     print Rater.rate_kind(Tweet({
         "tweet": "With the snow forecast for Tahoe this weekend, maybe the @mention riders need to bust out the 'Cross bikes :) @mention"
     }))
@@ -175,3 +199,8 @@ if __name__ == '__main__':
         "It was 102 degrees yesterday. I am not ready for this heat. San Diego sounds good right about now")
     print Rater.determine_tense_input(
         "Currently working on Melissa and Josh's engagement photos from this past rainy weekend. Can't wait to share.")
+
+
+if __name__ == '__main__':
+    filename = "index_60k_filtered_lemed_weighted_avg_normed_11.csv"
+    post_rate_weather(filename, indexer.TRAININGS_DATA_FILE)
