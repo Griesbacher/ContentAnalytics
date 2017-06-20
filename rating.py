@@ -1,9 +1,11 @@
 import nltk
 import re
 
+from elasticsearch import Elasticsearch
+
 import indexer
 from analyse import create_dict_from_tweets
-from csv_handling import load_tweet_csv, write_tweets_to_csv
+from csv_handling import load_tweet_csv, write_tweets_to_csv, get_index_from_filename
 from normalizer import Normalizer
 from nltk.corpus import wordnet
 from tweet import Tweet
@@ -150,7 +152,7 @@ class Rater:
         return tweet
 
 
-def post_rate_weather(result_file, raw_file):
+def post_rate_weather_tweet(result_file, raw_file):
     # type: (str, str) -> None
     result_tweets = load_tweet_csv(result_file)
     raw_tweets = load_tweet_csv(raw_file)
@@ -165,6 +167,25 @@ def post_rate_weather(result_file, raw_file):
         else:
             result.append(tweet)
     new_result_file = result_file[:-3] + "weather_rated.csv"
+    write_tweets_to_csv(result, new_result_file)
+
+
+def post_rate_tweet(result_file):
+    # type: (str) -> None
+    result_tweets = load_tweet_csv(result_file)
+    index = get_index_from_filename(result_file)
+    index = index.replace("60k", "all")
+    result = []
+    es = Elasticsearch()
+    i = 0
+    for tweet in result_tweets:
+        filtered_tweet = Tweet(es.get(index=index, id=tweet.get_id())["_source"])
+        tweet.set_tweet(filtered_tweet.get_tweet())
+        tweet = Rater.post_tense(tweet)
+        tweet = Rater.rate_kind(tweet)
+        result.append(tweet)
+
+    new_result_file = result_file[:-4] + "kind_when_rated.csv"
     write_tweets_to_csv(result, new_result_file)
 
 
@@ -203,4 +224,4 @@ def demo():
 
 if __name__ == '__main__':
     filename = "index_60k_filtered_lemed_weighted_avg_normed_11.csv"
-    post_rate_weather(filename, indexer.TRAININGS_DATA_FILE)
+    post_rate_tweet(filename)
