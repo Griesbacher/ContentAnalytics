@@ -8,6 +8,7 @@ csv_cache = dict()
 
 
 def load_tweet_csv(filename, use_pickle=True, use_cache=True):
+    # type: (str, bool, bool) -> list
     global csv_cache
     if use_cache and filename in csv_cache:
         return csv_cache[filename]
