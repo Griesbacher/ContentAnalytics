@@ -2,6 +2,7 @@ import csv
 import os
 import pickle
 
+from indices import get_all_indices
 from tweet import Tweet
 
 csv_cache = dict()
@@ -50,3 +51,10 @@ def write_tweets_to_csv(tweets, filename):
             line = [t.get_id()]
             for key in Tweet.get_all_keys(): line.append(t[key])
             csv_writer.writerow(line)
+
+
+def get_index_from_filename(filename):
+    # type: (str) -> str
+    for i in get_all_indices():
+        if filename.startswith(i):
+            return i
