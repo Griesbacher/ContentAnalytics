@@ -52,7 +52,7 @@ class Normalizer:
                     except UnicodeDecodeError:
                         pass
                 else:
-                    result += word[0]
+                    result += word[0] + " "
             return result
         except:
             traceback.print_exc()
@@ -124,6 +124,7 @@ class Normalizer:
 if __name__ == '__main__':
     print Normalizer().stem("At eight o'clock on Thursday morning... Arthur didn't feel very good.")
     print Normalizer().lem("At eight o'clock on Thursday morning... Arthur didn't feel very good.")
+    print Normalizer().lem("RT: @mention: I love rainy days.")
     print Normalizer.autocorrect_word("hoooottttt")
     print Normalizer.autocorrect_word("glllooooorious")
     print Normalizer.autocorrect_word("moon")
