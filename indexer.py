@@ -82,4 +82,4 @@ if __name__ == '__main__':
     es = Elasticsearch()
 
     all_tweets = load_tweet_csv(TRAININGS_DATA_FILE)
-    index_all_filtered_certain_lemed(all_tweets)
+    index_everything(all_tweets)
