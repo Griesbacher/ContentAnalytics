@@ -6,7 +6,7 @@ import indices
 from normalizer import Normalizer
 from tweet import Tweet
 
-unwanted_strings = ["{link}", "@mention", "#weather"]
+unwanted_strings = ["{link}", "@mention", "#weather", "RT:", "RT "]
 pool = None
 
 
