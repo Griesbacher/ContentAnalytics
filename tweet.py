@@ -1,9 +1,12 @@
 import pprint
 
+from elasticsearch import Elasticsearch
+
 
 class Tweet(dict):
     _all_keys = None
     _all_unknown_keys = None
+    _es = Elasticsearch()
 
     def __init__(self, *args, **kwargs):
         super(Tweet, self).__init__(*args, **kwargs)
@@ -15,6 +18,13 @@ class Tweet(dict):
         else:
             if "tweet" in self and isinstance(self["tweet"], unicode):
                 self["tweet"] = self["tweet"].encode('ascii', 'ignore')
+
+    def __add__(self, other):
+        for k in Tweet.get_all_keys():
+            self[k] += other[k]
+
+    def __str__(self):
+        return pprint.pformat(self).__str__()
 
     def get_tweet(self):
         # type: (None) -> str
@@ -68,9 +78,19 @@ class Tweet(dict):
 
         return self
 
-    def __add__(self, other):
-        for k in Tweet.get_all_keys():
-            self[k] += other[k]
+    def get_termvector(self, index, es=None):
+        if es is None:
+            es = Tweet._es
+
+        answer = es.termvectors(index=index, doc_type='tweet', body={"fields": ["tweet"]}, id=self.get_id())
+        if "term_vectors" in answer \
+                and "tweet" in answer["term_vectors"] \
+                and "terms" in answer["term_vectors"]["tweet"]:
+            term_vector = {key.encode('ascii', 'ignore'): value["term_freq"] for key, value in
+                           answer["term_vectors"]["tweet"]["terms"].items()}
+            return term_vector
+        else:
+            return {}
 
     @staticmethod
     def get_k_keys():
@@ -115,5 +135,3 @@ class Tweet(dict):
             Tweet._all_unknown_keys = [Tweet.get_unknown_k_key(), Tweet.get_unknown_s_key(), Tweet.get_unknown_w_key()]
         return Tweet._all_unknown_keys
 
-    def __str__(self):
-        return pprint.pformat(self).__str__()
