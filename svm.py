@@ -11,8 +11,9 @@ from elasticsearch import Elasticsearch
 
 
 class SVM:
-    def __init__(self, index, es, separate_sw=False):
+    def __init__(self, index, es, separate_sw=False, use_probabilities=False):
         # type: (str, Elasticsearch) -> None
+        self._use_probabilities = use_probabilities
         self._index = index
         self._es = es
         self._separate_sw = separate_sw
@@ -21,7 +22,11 @@ class SVM:
             self._sclassifier = svm.LinearSVC()
             self._wclassifier = svm.LinearSVC()
         else:
-            self._classifiers = {key: svm.LinearSVC() for key in Tweet.get_all_keys()}
+            if self._use_probabilities:
+                self._classifiers = {key: svm.SVC(probability=True) for key in Tweet.get_all_keys()}
+            else:
+                self._classifiers = {key: svm.LinearSVC() for key in Tweet.get_all_keys()}
+
         self._vocabulary = []
 
     def get_term_vector(self, tweet):
@@ -150,7 +155,10 @@ class SVM:
             tweet[wclass] = 1.0
         else:
             for tweet_class, clf in self._classifiers.iteritems():
-                class_result = int(self._classifiers[tweet_class].predict([term_vectors]).tolist()[0])
+                if self._use_probabilities:
+                    class_result = self._classifiers[tweet_class].predict_proba([term_vectors])[0][1]
+                else:
+                    class_result = int(self._classifiers[tweet_class].predict([term_vectors]).tolist()[0])
                 tweet[tweet_class] = class_result
         return tweet
 
@@ -164,10 +172,11 @@ def classify_tweet(tweet):
 
 if __name__ == '__main__':
     normalize = True
-    separate_sw = True
-    trainigSetSize = 5000  # up to 60000 possible
+    separate_sw = False
+    use_probabilities = True
+    trainigSetSize = 60000  # up to 60000 possible
     index = INDEX_60k_FILTERED
-    svm_classifier = SVM(index, Elasticsearch(), separate_sw)
+    svm_classifier = SVM(index, Elasticsearch(), separate_sw, use_probabilities)
     print "SVM learning..."
     plain_learn_tweets = load_tweet_csv(TRAININGS_DATA_FILE, use_pickle=False, use_cache=False)[:trainigSetSize]
     filtered_learn_tweets = get_filter_from_index(index)(plain_learn_tweets)
@@ -177,12 +186,20 @@ if __name__ == '__main__':
     filtered_tweets = get_filter_from_index(index)(plain_tweets)
 
     calculated_tweets = []
-    #pool = multiprocessing.Pool()
-    #calculated_tweets = pool.map(classify_tweet, filtered_tweets)
-    calculated_tweets = map(classify_tweet, filtered_tweets)
+    pool = multiprocessing.Pool()
+    calculated_tweets = pool.map(classify_tweet, filtered_tweets)
+    # calculated_tweets = map(classify_tweet, filtered_tweets)
+
+    # i = 0
+    # for tweet in filtered_tweets:
+    #     calculated_tweets.append(classify_tweet(tweet))
+    #     i += 1
+    #     if i % 100 == 0:
+    #         print "{} / {}".format(i, len(filtered_tweets))
 
     write_tweets_to_csv(calculated_tweets,
-                        "{}_svm_{}{}{}.csv".format(index, trainigSetSize, "_normcls" if normalize else "", "_sepsw" if separate_sw else ""))
+                        "{}_svm_{}{}{}{}.csv".format(index, trainigSetSize, "_probs" if use_probabilities else "", "_normcls" if normalize else "",
+                                                     "_sepsw" if separate_sw else ""))
 
 """
 --- index_60k_filtered_svm_1000.csv --- with 1000 training tweets and without normalizing the classes
