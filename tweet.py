@@ -79,6 +79,7 @@ class Tweet(dict):
         return self
 
     def get_termvector(self, index, es=None):
+        # type: (str, Elasticsearch) -> dict
         if es is None:
             es = Tweet._es
 
@@ -134,4 +135,3 @@ class Tweet(dict):
         if Tweet._all_unknown_keys is None:
             Tweet._all_unknown_keys = [Tweet.get_unknown_k_key(), Tweet.get_unknown_s_key(), Tweet.get_unknown_w_key()]
         return Tweet._all_unknown_keys
-
