@@ -41,7 +41,7 @@ class GB:
             for k in Tweet.get_all_keys():
                 predict = self._all_models[k].predict_proba(np.array([term_vectors[tweet.get_id()]]))
                 new_tweet[k] = predict[0][1]
-            result.append(new_tweet)
+            result.append(new_tweet.normalize())
             i += 1
             if i % 1000 == 0:
                 print "GB analysed %d of %d" % (i, len(tweets))
@@ -50,16 +50,16 @@ class GB:
 
 if __name__ == '__main__':
     all_tweets = load_tweet_csv("train.csv")
-    trainings_tweets = all_tweets[:1000]
-    test_tweets = all_tweets[60000:61000]
-    index = indices.INDEX_60k_FILTERED_LEMED
-    gbm = GB(index)
-    print "starting fit"
-    start = time.time()
-    gbm.fit(trainings_tweets)
-    print "finished fit", time.time() - start
-    print "starting predict"
-    start = time.time()
-    result_tweets = gbm.predict_proba(test_tweets)
-    print "finished fit", time.time() - start
-    write_tweets_to_csv(result_tweets, index + "_gb.csv")
+    trainings_tweets = all_tweets[:2000]
+    test_tweets = all_tweets[60000:]
+    for index in indices.get_60k_indices():
+        gbm = GB(index)
+        print "starting fit"
+        start = time.time()
+        gbm.fit(trainings_tweets)
+        print "finished fit", time.time() - start
+        print "starting predict"
+        start = time.time()
+        result_tweets = gbm.predict_proba(test_tweets)
+        print "finished fit", time.time() - start
+        write_tweets_to_csv(result_tweets, index + "_gb_normalized.csv")

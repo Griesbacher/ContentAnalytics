@@ -40,6 +40,8 @@ def create_term_vectors_as_array(index, tweets):
     x = np.empty((len(tweets), len(vocabulary)))
     for i in range(len(tweets)):
         x[i] = np.array(map(lambda v: float(termvectors[tweets[i].get_id()].get(v, 0)), vocabulary))
+        if i % 1000 == 0:
+            print "%d / %d" % (i, len(tweets))
     print "merging term vectors took:", time.time() - start
 
     return x
