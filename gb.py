@@ -5,7 +5,7 @@ from xgboost import XGBClassifier
 
 import indices
 from csv_handling import load_tweet_csv, write_tweets_to_csv
-from tools import create_term_vectors
+from tools import create_term_vectors_as_dict, create_term_vectors_as_array
 from tweet import Tweet
 import numpy as np
 
@@ -18,16 +18,10 @@ class GB:
 
     def fit(self, tweets):
         print "fetching termvectors"
-        term_vectors = create_term_vectors(self._train_index, tweets)
-        x = None
-        print "building x"
-        for tweet in tweets:
-            if x is None:
-                x = np.array([term_vectors[tweet.get_id()]])
-            else:
-                x = np.append(x, [term_vectors[tweet.get_id()]], axis=0)
+        start = time.time()
+        x = create_term_vectors_as_array(self._train_index, tweets)
+        print "finished termvectors", time.time() - start
         print len(x)
-        del term_vectors
         for k in Tweet.get_all_keys():
             print "fitting %s" % k
             y = []
@@ -38,7 +32,7 @@ class GB:
             # TODO: use weights: https://datascience.stackexchange.com/questions/9488/xgboost-give-more-importance-to-recent-samples
 
     def predict_proba(self, tweets):
-        term_vectors = create_term_vectors(self._test_index, tweets)
+        term_vectors = create_term_vectors_as_dict(self._test_index, tweets)
         print "Starting prediction"
         result = list()
         i = 0
@@ -57,7 +51,7 @@ class GB:
 if __name__ == '__main__':
     all_tweets = load_tweet_csv("train.csv")
     trainings_tweets = all_tweets[:1000]
-    test_tweets = all_tweets[60000:]
+    test_tweets = all_tweets[60000:61000]
     index = indices.INDEX_60k_FILTERED_LEMED
     gbm = GB(index)
     print "starting fit"
