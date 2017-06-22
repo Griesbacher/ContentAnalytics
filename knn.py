@@ -2,10 +2,8 @@ from elasticsearch import Elasticsearch
 
 import indexer
 import indices
-from analyse import create_dict_from_tweets
 from csv_handling import write_tweets_to_csv, load_tweet_csv
 from filter import get_filter_from_index
-from rating import Rater
 from tweet import Tweet
 
 
@@ -30,6 +28,7 @@ class KNN:
 
     @staticmethod
     def avg(weighted_tweets):
+        # type: (dict) -> Tweet
         result_tweet = Tweet()
 
         for tweet in weighted_tweets.values():
@@ -81,6 +80,6 @@ if __name__ == '__main__':
                 if i % 1000 == 0:
                     print "KNN analysed %d of %d" % (i, len(filtered_tweets))
 
-            write_tweets_to_csv(calculated_tweets_avg, index + "_avg_%d.csv" % k)
-            write_tweets_to_csv(calculated_tweets_weighted_avg, index + "_weighted_avg_%d.csv" % k)
-            write_tweets_to_csv(calculated_tweets_weighted_avg_normed, index + "_weighted_avg_normed_%d.csv" % k)
+            write_tweets_to_csv(calculated_tweets_avg, index + "_knn_avg_%d.csv" % k)
+            write_tweets_to_csv(calculated_tweets_weighted_avg, index + "_knn_weighted_avg_%d.csv" % k)
+            write_tweets_to_csv(calculated_tweets_weighted_avg_normed, index + "_knn_weighted_avg_normed_%d.csv" % k)

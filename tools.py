@@ -18,6 +18,7 @@ def create_term_vectors(index, tweets):
         for term_vector in termvectors.values():
             vocabulary.update(term_vector.keys())
         vocabulary = list(vocabulary)
+        print "vocabulary size %d" % len(vocabulary)
 
     print "merging term vectors"
     for tweet_id in termvectors:

@@ -60,12 +60,12 @@ if __name__ == '__main__':
     test_tweets = all_tweets[60000:]
     index = indices.INDEX_60k_FILTERED_LEMED
     gbm = GB(index)
-    print ("starting fit")
+    print "starting fit"
     start = time.time()
     gbm.fit(trainings_tweets)
-    print ("finished fit", time.time() - start)
-    print ("starting predict")
+    print "finished fit", time.time() - start
+    print "starting predict"
     start = time.time()
     result_tweets = gbm.predict_proba(test_tweets)
-    print ("finished fit", time.time() - start)
+    print "finished fit", time.time() - start
     write_tweets_to_csv(result_tweets, index + "_gb.csv")
