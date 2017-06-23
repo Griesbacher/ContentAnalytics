@@ -25,9 +25,10 @@ def create_dict_from_tweets(tweets):
 MODE_HUMAN = 1
 MODE_MARKDOWN = 2
 MODE_MARKDOWN_ALL = 3
+printed_header = False
 
 
-def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN):
+def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN, extended=False):
     calc_tweets = load_tweet_csv(filename=result_csv, use_cache=False, use_pickle=False)
     real_tweets = load_tweet_csv(filename=train_csv)
 
@@ -43,6 +44,9 @@ def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN):
     rmse_s_real_values = []
     rmse_w_calc_values = []
     rmse_w_real_values = []
+
+    rmse_single_keys_calc_values = {k: [] for k in Tweet.get_all_keys()}
+    rmse_single_keys_real_values = {k: [] for k in Tweet.get_all_keys()}
 
     for calc_id, calc_tweet in dict_calc_tweets.iteritems():
         if calc_id in dict_real_tweets:
@@ -62,10 +66,21 @@ def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN):
                 rmse_calc_values.append(calc_tweet[key])
                 rmse_real_values.append(dict_real_tweets[calc_id][key])
 
+            if extended:
+                for key in Tweet.get_all_keys():
+                    rmse_single_keys_calc_values[key].append(calc_tweet[key])
+                    rmse_single_keys_real_values[key].append(dict_real_tweets[calc_id][key])
+
     overall = calc_root_mean_squared_error(rmse_real_values, rmse_calc_values)
     kind = calc_root_mean_squared_error(rmse_k_real_values, rmse_k_calc_values)
     sentiment = calc_root_mean_squared_error(rmse_s_real_values, rmse_s_calc_values)
     when = calc_root_mean_squared_error(rmse_w_real_values, rmse_w_calc_values)
+    single_keys = {}
+    if extended:
+        single_keys = {
+            k: calc_root_mean_squared_error(rmse_single_keys_real_values[k], rmse_single_keys_calc_values[k])
+            for k in Tweet.get_all_keys()
+            }
 
     if mode == MODE_HUMAN:
         print "--- %s ---" % result_csv
@@ -73,6 +88,10 @@ def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN):
         print "K(kind)      RMSE: %f" % kind
         print "S(sentiment) RMSE: %f" % sentiment
         print "W(when)      RMSE: %f" % when
+        if extended:
+            for k in Tweet.get_k_keys():
+                print "%s:          RMSE: %f" % (k, single_keys[k])
+
         print
     elif mode == MODE_MARKDOWN:
         print "| File | Gesamt RMSE | Kind | Sentiment | When |"
@@ -80,7 +99,17 @@ def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN):
         print "| %s | %f | %f | %f | %f |" % (result_csv, overall, kind, sentiment, when)
         print
     elif mode == MODE_MARKDOWN_ALL:
-        print "| %s | %f | %f | %f | %f |" % (result_csv, overall, kind, sentiment, when)
+        global printed_header
+        if not printed_header:
+            printed_header = True
+            print "| File | Gesamt RMSE | Kind | Sentiment | When | " + \
+                  " | ".join([k for k in Tweet.get_all_keys()]) + " |"
+            print "|------|------------|------|-----------|------|" + "----|" * len(Tweet.get_all_keys())
+        to_print = "| %s | %f | %f | %f | %f |" % (result_csv, overall, kind, sentiment, when)
+        if extended:
+            for k in Tweet.get_all_keys():
+                to_print += " %f |" % single_keys[k]
+        print to_print
 
 
 def find_csv_filenames(path_to_dir, suffix=".csv"):
@@ -96,17 +125,17 @@ def natural_sort(l):
     return sorted(l, key=alphanum_key)
 
 
-def analyse_all():
+def analyse_all(extended):
     files = find_csv_filenames(".")
     files.pop(files.index(indexer.TRAININGS_DATA_FILE))
     files.pop(files.index(indexer.TEST_DATA_FILE))
     for csv_file in natural_sort(files):
         try:
-            analyse_csv(csv_file, indexer.TRAININGS_DATA_FILE, MODE_MARKDOWN_ALL)
+            analyse_csv(csv_file, indexer.TRAININGS_DATA_FILE, MODE_MARKDOWN_ALL, extended=extended)
         except Exception as e:
-            print e.message
+            print "Exception(%s) in file: %s " % (e.message, csv_file)
 
 
 if __name__ == '__main__':
-    analyse_all()
+    analyse_all(True)
     # analyse_csv("index_60k_filtered_lemed_weighted_avg_tense_11.csv", indexer.TRAININGS_DATA_FILE)
