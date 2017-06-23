@@ -5,7 +5,7 @@ from xgboost import XGBClassifier
 
 import indices
 from csv_handling import load_tweet_csv, write_tweets_to_csv
-from tools import create_term_vectors_as_dict, create_term_vectors_as_array
+from tools import create_term_vectors_as_dict, create_term_vectors_as_array, get_binary_feature
 from tweet import Tweet
 import numpy as np
 
@@ -21,15 +21,15 @@ class GB:
         start = time.time()
         x = create_term_vectors_as_array(self._train_index, tweets)
         print "finished termvectors", time.time() - start
-        print len(x)
         for k in Tweet.get_all_keys():
             print "fitting %s" % k
-            y = []
+            ys = []
+            weights = []
             for tweet in tweets:
-                y.append(1.0 if tweet[k] > 0.5 else 0.0)
-            y = np.array(y)
-            self._all_models[k].fit(x, y)
-            # TODO: use weights: https://datascience.stackexchange.com/questions/9488/xgboost-give-more-importance-to-recent-samples
+                y, weight = get_binary_feature(tweet[k])
+                ys.append(y)
+                weights.append(weight * 100)
+            self._all_models[k].fit(x, np.array(ys))
 
     def predict_proba(self, tweets):
         term_vectors = create_term_vectors_as_dict(self._test_index, tweets)
@@ -39,8 +39,9 @@ class GB:
         for tweet in tweets:
             new_tweet = Tweet().set_id(tweet.get_id())
             for k in Tweet.get_all_keys():
-                predict = self._all_models[k].predict_proba(np.array([term_vectors[tweet.get_id()]]))
-                new_tweet[k] = predict[0][1]
+                # predict = self._all_models[k].predict_proba(np.array([term_vectors[tweet.get_id()]]))
+                predict = self._all_models[k].predict(np.array([term_vectors[tweet.get_id()]]))
+                new_tweet[k] = predict[0]
             result.append(new_tweet.normalize())
             i += 1
             if i % 1000 == 0:
@@ -50,10 +51,10 @@ class GB:
 
 if __name__ == '__main__':
     all_tweets = load_tweet_csv("train.csv")
-    trainings_tweets = all_tweets[:2000]
+    trainings_tweets = all_tweets[:1000]
     test_tweets = all_tweets[60000:]
     for index in indices.get_60k_indices():
-        gbm = GB(index)
+        gbm = GB(index, index.replace("_60k_", "_all_"))
         print "starting fit"
         start = time.time()
         gbm.fit(trainings_tweets)
@@ -62,4 +63,4 @@ if __name__ == '__main__':
         start = time.time()
         result_tweets = gbm.predict_proba(test_tweets)
         print "finished fit", time.time() - start
-        write_tweets_to_csv(result_tweets, index + "_gb_normalized.csv")
+        write_tweets_to_csv(result_tweets, index + "_gb_binary_normalized.csv")
