@@ -66,5 +66,6 @@ def get_float_feature(feature, digits):
 
 if __name__ == '__main__':
     tweets = [Tweet({"id": 1}), Tweet({"id": 2})]
-    print create_term_vectors_as_dict(indices.INDEX_60k_FILTERED_LEMED, tweets)
-    print create_term_vectors_as_array(indices.INDEX_60k_FILTERED_LEMED, tweets)
+    tv = Termvectorer()
+    print tv.create_term_vectors_as_dict(indices.INDEX_60k_FILTERED_LEMED, tweets)
+    print tv.create_term_vectors_as_array(indices.INDEX_60k_FILTERED_LEMED, tweets)
