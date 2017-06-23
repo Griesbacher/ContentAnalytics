@@ -35,6 +35,11 @@ def index_all_filtered(tweets):
     index_data(get_filter_from_index(indices.INDEX_ALL_FILTERED)(tweets), indices.INDEX_ALL_FILTERED)
 
 
+def index_all_filtered_certain(tweets):
+    index_data(get_filter_from_index(indices.INDEX_ALL_FILTERED_CERTAIN)(tweets),
+               indices.INDEX_ALL_FILTERED_CERTAIN)
+
+
 def index_all_filtered_spelled_lemed(tweets):
     index_data(get_filter_from_index(indices.INDEX_ALL_FILTERED_SPELLED_LEMED)(tweets),
                indices.INDEX_ALL_FILTERED_SPELLED_LEMED)
@@ -59,6 +64,11 @@ def index_60k_filtered(tweets):
     index_data(get_filter_from_index(indices.INDEX_60k_FILTERED)(tweets[:60000]), indices.INDEX_60k_FILTERED)
 
 
+def index_60k_filtered_certain(tweets):
+    index_data(get_filter_from_index(indices.INDEX_60k_FILTERED_CERTAIN)(tweets[:60000]),
+               indices.INDEX_60k_FILTERED_CERTAIN)
+
+
 def index_60k_filtered_certain_lemed(tweets):
     index_data(get_filter_from_index(indices.INDEX_60k_FILTERED_CERTAIN_LEMED)(tweets[:60000]),
                indices.INDEX_60k_FILTERED_CERTAIN_LEMED)
@@ -78,6 +88,7 @@ def index_everything(tweets):
     index_60k_filtered_stemed(tweets)
     index_60k_filtered_lemed(tweets)
     index_60k_filtered(tweets)
+    index_60k_filtered_certain(tweets)
     index_60k_filtered_certain_lemed(tweets)
     index_60k_filtered_spelled_lemed(tweets)
     index_60k_filtered_certain_spelled_lemed(tweets)
@@ -86,6 +97,7 @@ def index_everything(tweets):
     index_all_filtered_lemed(tweets)
     index_all_filtered_certain_lemed(tweets)
     index_all_filtered(tweets)
+    index_all_filtered_certain(tweets)
     index_all_filtered_spelled_lemed(tweets)
     index_all_filtered_certain_spelled_lemed(tweets)
 
