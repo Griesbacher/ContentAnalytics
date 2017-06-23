@@ -9,7 +9,15 @@ vocabulary = set()
 
 def _get_term_vectors_from_es_and_build_voc(index, tweets):
     print "getting termvectors from es"
-    termvectors = {tweet.get_id(): tweet.get_termvector(index) for tweet in tweets}
+    termvectors = {}
+    empty_vectors = 0
+    for tweet in tweets:
+        termvectors[tweet.get_id()] = tweet.get_termvector(index)
+        if len(termvectors[tweet.get_id()]) == 0:
+            empty_vectors += 1
+    if empty_vectors > 5:
+        raise Exception("%d Tweets did not return a termvector" % empty_vectors)
+    print "%d Tweets did not return a termvector" % empty_vectors
 
     global vocabulary
     if len(vocabulary) == 0:
@@ -47,9 +55,15 @@ def create_term_vectors_as_array(index, tweets):
     return x
 
 
-def probability_to_percent(prob):
-    # type: (np.array) -> float
-    pass
+def get_binary_feature(feature):
+    # type: (float) -> (float, float)
+    y = 1.0 if feature > 0.5 else 0.0
+    return (y, feature) if y == 1 else (y, 1 - feature)
+
+
+def get_float_feature(feature, digits):
+    # type: (float) -> (float)
+    return round(feature, digits)
 
 
 if __name__ == '__main__':
