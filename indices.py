@@ -28,6 +28,6 @@ def get_60k_indices():
     # type: () -> list
     result = list()
     for i in get_all_indices():
-        if "60k" in i:
+        if "_60k_" in i:
             result.append(i)
     return result
