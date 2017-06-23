@@ -5,7 +5,7 @@ from xgboost import XGBClassifier
 
 import indices
 from csv_handling import load_tweet_csv, write_tweets_to_csv
-from tools import create_term_vectors_as_dict, create_term_vectors_as_array, get_binary_feature
+from tools import  get_binary_feature, Termvectorer
 from tweet import Tweet
 import numpy as np
 
@@ -15,11 +15,12 @@ class GB:
         self._all_models = {k: XGBClassifier() for k in Tweet.get_all_keys()}
         self._train_index = train_index
         self._test_index = train_index if test_index is None else test_index
+        self._tv = Termvectorer()
 
     def fit(self, tweets):
         print "fetching termvectors"
         start = time.time()
-        x = create_term_vectors_as_array(self._train_index, tweets)
+        x = self._tv.create_term_vectors_as_array(self._train_index, tweets)
         print "finished termvectors", time.time() - start
         for k in Tweet.get_all_keys():
             print "fitting %s" % k
@@ -32,7 +33,7 @@ class GB:
             self._all_models[k].fit(x, np.array(ys))
 
     def predict_proba(self, tweets):
-        term_vectors = create_term_vectors_as_dict(self._test_index, tweets)
+        term_vectors = self._tv.create_term_vectors_as_dict(self._test_index, tweets)
         print "Starting prediction"
         result = list()
         i = 0
@@ -54,7 +55,7 @@ if __name__ == '__main__':
     trainings_tweets = all_tweets[:1000]
     test_tweets = all_tweets[60000:]
     for index in indices.get_60k_indices():
-        gbm = GB(index, index.replace("_60k_", "_all_"))
+        gbm = GB(index, index.replace("_60k_", "_all_").replace("_certain", ""))
         print "starting fit"
         start = time.time()
         gbm.fit(trainings_tweets)

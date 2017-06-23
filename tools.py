@@ -4,55 +4,53 @@ import indices
 from tweet import Tweet
 import numpy as np
 
-vocabulary = set()
 
+class Termvectorer():
+    def __init__(self):
+        self._vocabulary = set()
 
-def _get_term_vectors_from_es_and_build_voc(index, tweets):
-    print "getting termvectors from es"
-    termvectors = {}
-    empty_vectors = 0
-    for tweet in tweets:
-        termvectors[tweet.get_id()] = tweet.get_termvector(index)
-        if len(termvectors[tweet.get_id()]) == 0:
-            empty_vectors += 1
-    if empty_vectors > 5:
-        raise Exception("%d Tweets did not return a termvector" % empty_vectors)
-    print "%d Tweets did not return a termvector" % empty_vectors
+    def _get_term_vectors_from_es_and_build_voc(self, index, tweets):
+        print "getting termvectors from es"
+        termvectors = {}
+        empty_vectors = 0
+        for tweet in tweets:
+            termvectors[tweet.get_id()] = tweet.get_termvector(index)
+            if len(termvectors[tweet.get_id()]) == 0:
+                empty_vectors += 1
+        if empty_vectors > 5:
+            print "!!!!! %d Tweets did not return a termvector for index: %s!!!!!" % (empty_vectors, index)
 
-    global vocabulary
-    if len(vocabulary) == 0:
-        print "building vocabulary"
-        for term_vector in termvectors.values():
-            vocabulary.update(term_vector.keys())
-        vocabulary = list(vocabulary)
-        print "vocabulary size %d" % len(vocabulary)
-    return termvectors
+        if len(self._vocabulary) == 0:
+            print "building vocabulary"
+            for term_vector in termvectors.values():
+                self._vocabulary.update(term_vector.keys())
+            self._vocabulary = list(self._vocabulary)
+            print "vocabulary size %d" % len(self._vocabulary)
+        return termvectors
 
+    def create_term_vectors_as_dict(self, index, tweets):
+        # type: (str, list) -> dict
+        termvectors = self._get_term_vectors_from_es_and_build_voc(index, tweets)
 
-def create_term_vectors_as_dict(index, tweets):
-    # type: (str, list) -> dict
-    termvectors = _get_term_vectors_from_es_and_build_voc(index, tweets)
+        print "merging term vectors"
+        for tweet_id in termvectors:
+            termvectors[tweet_id] = np.array(map(lambda x: float(termvectors[tweet_id].get(x, 0)), self._vocabulary))
+        return termvectors
 
-    print "merging term vectors"
-    for tweet_id in termvectors:
-        termvectors[tweet_id] = np.array(map(lambda x: float(termvectors[tweet_id].get(x, 0)), vocabulary))
-    return termvectors
+    def create_term_vectors_as_array(self, index, tweets):
+        # type: (str, list) -> np.array
+        termvectors = self._get_term_vectors_from_es_and_build_voc(index, tweets)
 
+        print "merging term vectors"
+        start = time.time()
+        x = np.empty((len(tweets), len(self._vocabulary)))
+        for i in range(len(tweets)):
+            x[i] = np.array(map(lambda v: float(termvectors[tweets[i].get_id()].get(v, 0)), self._vocabulary))
+            if i % 1000 == 0:
+                print "%d / %d" % (i, len(tweets))
+        print "merging term vectors took:", time.time() - start
 
-def create_term_vectors_as_array(index, tweets):
-    # type: (str, list) -> np.array
-    termvectors = _get_term_vectors_from_es_and_build_voc(index, tweets)
-
-    print "merging term vectors"
-    start = time.time()
-    x = np.empty((len(tweets), len(vocabulary)))
-    for i in range(len(tweets)):
-        x[i] = np.array(map(lambda v: float(termvectors[tweets[i].get_id()].get(v, 0)), vocabulary))
-        if i % 1000 == 0:
-            print "%d / %d" % (i, len(tweets))
-    print "merging term vectors took:", time.time() - start
-
-    return x
+        return x
 
 
 def get_binary_feature(feature):
