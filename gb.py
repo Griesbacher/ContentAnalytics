@@ -89,6 +89,7 @@ if __name__ == '__main__':
     testing_tweets = all_tweets[60000:]
     less_mem = True
     indices_to_test = sys.argv[1:] if len(sys.argv[1:]) > 0 else indices.get_60k_indices()
+    print "To test:", indices_to_test
     for index in indices_to_test:
         print "*" * 20 + index + "*" * 20
         gbm = GB(index, index.replace("_60k_", "_all_").replace("_certain", ""))

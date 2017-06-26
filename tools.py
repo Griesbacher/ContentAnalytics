@@ -7,7 +7,7 @@ import numpy as np
 
 class Termvectorer():
     def __init__(self):
-        self._vocabulary = set()
+        self._vocabulary = np.array(list(), dtype="string")
 
     def _get_term_vectors_from_es_and_build_voc(self, index, tweets):
         print "getting termvectors from es"
@@ -22,9 +22,11 @@ class Termvectorer():
 
         if len(self._vocabulary) == 0:
             print "building vocabulary"
+            tmp_set = set()
             for term_vector in termvectors.values():
-                self._vocabulary.update(term_vector.keys())
-            self._vocabulary = list(self._vocabulary)
+                tmp_set.update(term_vector.keys())
+            self._vocabulary = np.array(list(tmp_set))
+            del tmp_set
             print "vocabulary size %d" % len(self._vocabulary)
         return termvectors
 
@@ -34,7 +36,8 @@ class Termvectorer():
 
         print "merging term vectors"
         for tweet_id in termvectors:
-            termvectors[tweet_id] = np.array(map(lambda x: float(termvectors[tweet_id].get(x, 0)), self._vocabulary))
+            termvectors[tweet_id] = np.array(map(lambda x: int(termvectors[tweet_id].get(x, 0)), self._vocabulary),
+                                             dtype="int8")
         return termvectors
 
     def create_term_vectors_as_array(self, index, tweets):
@@ -43,9 +46,10 @@ class Termvectorer():
 
         print "merging term vectors"
         start = time.time()
-        x = np.empty((len(tweets), len(self._vocabulary)))
+        x = np.empty((len(tweets), len(self._vocabulary)), dtype="int8")
         for i in range(len(tweets)):
-            x[i] = np.array(map(lambda v: float(termvectors[tweets[i].get_id()].get(v, 0)), self._vocabulary))
+            x[i] = np.array(map(lambda v: int(termvectors[tweets[i].get_id()].get(v, 0)), self._vocabulary),
+                            dtype="int8")
             if i % 1000 == 0:
                 print "%d / %d" % (i, len(tweets))
         print "merging term vectors took:", time.time() - start
