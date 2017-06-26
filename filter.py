@@ -30,6 +30,9 @@ def filter_normalize_stem(tweet): return tweet.set_tweet(Normalizer.stem(tweet.g
 def filter_normalize_lem(tweet): return tweet.set_tweet(Normalizer.lem(tweet.get_tweet()))
 
 
+def filter_stop_remove(tweet): return tweet.set_tweet(Normalizer.stopwords_remove(tweet.get_tweet()))
+
+
 def filter_certainty(tweet):
     for key in Tweet.get_all_unknown_keys():
         if tweet[key] > 0.7:
@@ -71,9 +74,21 @@ def get_filter_from_index(index):
 
     def filter_filtered_spelled_lemed(tweets): return apply_filters(tweets, filter_tweet, filter_spell_checked_lem)
 
+    def filter_filtered_stopped_spelled(tweets): return apply_filters(tweets, filter_tweet, filter_stop_remove,
+                                                                      filter_spell_checked)
+
+    def filter_filtered_stopped_spelled_lemed(tweets): return apply_filters(tweets, filter_tweet, filter_stop_remove,
+                                                                            filter_spell_checked_lem)
+
     def filter_filtered_certain_spelled_lemed(tweets): return apply_filters(tweets, filter_tweet,
                                                                             filter_certainty,
                                                                             filter_spell_checked_lem)
+
+    def filter_filtered_certain_stopped_spelled_lemed(tweets): return apply_filters(tweets,
+                                                                                    filter_tweet,
+                                                                                    filter_certainty,
+                                                                                    filter_stop_remove,
+                                                                                    filter_spell_checked_lem)
 
     def filter_none(tweets): return tweets
     return {
@@ -89,7 +104,12 @@ def get_filter_from_index(index):
         indices.INDEX_60k_FILTERED_CERTAIN_LEMED: filter_filtered_certain_lemed,
         indices.INDEX_ALL_FILTERED_SPELLED_LEMED: filter_filtered_spelled_lemed,
         indices.INDEX_60k_FILTERED_SPELLED_LEMED: filter_filtered_spelled_lemed,
+        indices.INDEX_ALL_FILTERED_STOPPED_SPELLED: filter_filtered_stopped_spelled,
+        indices.INDEX_60k_FILTERED_STOPPED_SPELLED: filter_filtered_stopped_spelled,
+        indices.INDEX_ALL_FILTERED_STOPPED_SPELLED_LEMED: filter_filtered_stopped_spelled_lemed,
+        indices.INDEX_60k_FILTERED_STOPPED_SPELLED_LEMED: filter_filtered_stopped_spelled_lemed,
+        indices.INDEX_ALL_FILTERED_CERTAIN_STOPPED_SPELLED_LEMED: filter_filtered_certain_stopped_spelled_lemed,
+        indices.INDEX_60k_FILTERED_CERTAIN_STOPPED_SPELLED_LEMED: filter_filtered_certain_stopped_spelled_lemed,
         indices.INDEX_ALL_FILTERED_CERTAIN_SPELLED_LEMED: filter_filtered_certain_spelled_lemed,
         indices.INDEX_60k_FILTERED_CERTAIN_SPELLED_LEMED: filter_filtered_certain_spelled_lemed,
     }.get(index, filter_none)
-

@@ -1,5 +1,7 @@
 import traceback
 
+from nltk.corpus import stopwords
+
 try:
     import enchant
 
@@ -33,6 +35,7 @@ class Normalizer:
         nltk.corpus.reader.wordnet.VERB
     ]
     _printable = set(string.printable)
+    _stop = set(stopwords.words('english'))
 
     @staticmethod
     def stem(text):
@@ -67,6 +70,11 @@ class Normalizer:
         if enchant_enabled:
             Normalizer._spell_dict = enchant.Dict(dict_name)
         Normalizer._max_dist = max_dist
+
+    @staticmethod
+    def stopwords_remove(text):
+        # type: (str) -> str
+        return " ".join([i for i in Normalizer.tokenize(text) if i.lower() not in Normalizer._stop])
 
     @staticmethod
     def _dictionary_lookup(word):
@@ -122,6 +130,8 @@ class Normalizer:
 
 
 if __name__ == '__main__':
+    print Normalizer().stopwords_remove("At eight o'clock on Thursday morning... Arthur didn't feel very good.")
+
     print Normalizer().stem("At eight o'clock on Thursday morning... Arthur didn't feel very good.")
     print Normalizer().lem("At eight o'clock on Thursday morning... Arthur didn't feel very good.")
     print Normalizer().lem("RT: @mention: I love rainy days.")
