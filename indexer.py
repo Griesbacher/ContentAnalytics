@@ -100,8 +100,8 @@ def index_60k_filtered_stopped_spelled(tweets):
 
 
 def index_60k_filtered_stopped_spelled_lemed(tweets):
-    index_data(get_filter_from_index(indices.INDEX_ALL_FILTERED_STOPPED_SPELLED_LEMED)(tweets[:60000]),
-               indices.INDEX_ALL_FILTERED_STOPPED_SPELLED_LEMED)
+    index_data(get_filter_from_index(indices.INDEX_60k_FILTERED_STOPPED_SPELLED_LEMED)(tweets[:60000]),
+               indices.INDEX_60k_FILTERED_STOPPED_SPELLED_LEMED)
 
 
 def index_60k_filtered_certain_spelled_lemed(tweets):
@@ -142,4 +142,4 @@ if __name__ == '__main__':
     es = Elasticsearch()
 
     all_tweets = load_tweet_csv(TRAININGS_DATA_FILE)
-    index_everything(all_tweets)
+    index_60k_filtered_stopped_spelled_lemed(all_tweets)
