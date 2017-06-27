@@ -59,12 +59,9 @@ class KNN:
 
 if __name__ == '__main__':
     plain_tweets = load_tweet_csv(indexer.TRAININGS_DATA_FILE)[60000:]
-    for index in [indices.INDEX_60k_FILTERED, indices.INDEX_60k_FILTERED_STEMED,
-                  indices.INDEX_60k_FILTERED_LEMED, indices.INDEX_60k_FILTERED_SPELLED_LEMED,
-                  indices.INDEX_60k_FILTERED_CERTAIN, indices.INDEX_60k_FILTERED_CERTAIN_LEMED]:
+    for index in indices.get_60k_indices():
         knn = KNN(index, Elasticsearch())
-        if index not in [indices.INDEX_60k_FILTERED_CERTAIN, indices.INDEX_60k_FILTERED_CERTAIN_LEMED]:
-            filtered_tweets = get_filter_from_index(index)(plain_tweets)
+        filtered_tweets = get_filter_from_index(index.replace("_certain", ""))(plain_tweets)
         for k in range(1, 15, 2):
             i = 0
             calculated_tweets_avg = []
