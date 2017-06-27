@@ -58,8 +58,8 @@ class Termvectorer():
 
 
 def get_binary_feature(feature):
-    # type: (float) -> (float, float)
-    y = 1.0 if feature > 0.5 else 0.0
+    # type: (float) -> (int, float)
+    y = 1 if feature > 0.5 else 0
     return (y, feature) if y == 1 else (y, 1 - feature)
 
 
