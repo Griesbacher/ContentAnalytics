@@ -64,11 +64,47 @@ def get_binary_feature(feature):
 
 
 def get_float_feature(feature, digits):
-    # type: (float) -> (float)
+    # type: (float) -> float
     return round(feature, digits)
 
 
+def merge_numpy_dict_features(features_list, dtype="int8"):
+    # type: (list, str) -> np.array
+    """Merges multiple dict features to one"""
+    if len(features_list) == 0:
+        return list()
+    length = len(features_list[0])
+    amount_of_features = 0
+    for f in features_list:
+        amount_of_features += len(f.values()[0])
+        if len(f) != length:
+            raise Exception("Features have to have the same length")
+    result = dict()
+    for i in features_list[0].keys():
+        result[i] = np.array(np.concatenate([f[i] for f in features_list]), dtype=dtype)
+    return result
+
+
+def merge_numpy_array_features(features_list, dtype="int8"):
+    # type: (list, str) -> np.array
+    """Merges multiple array features to one"""
+    if len(features_list) == 0:
+        return list()
+    length = features_list[0].shape[0]
+    amount_of_features = 0
+    for f in features_list:
+        amount_of_features += f.shape[1]
+        if f.shape[0] != length:
+            raise Exception("Features have to have the same length")
+    result = np.empty((length, amount_of_features), dtype=dtype)
+    for i in range(length):
+        result[i] = np.concatenate([f[i] for f in features_list])
+    return result
+
+
 if __name__ == '__main__':
+    print merge_numpy_array_features([np.array([[1, 1], [2, 2]]), np.array([[3], [4]])])
+    print merge_numpy_dict_features([{0: np.array([1, 1]), 2: np.array([2, 2])}, {0: np.array([3]), 2: np.array([4])}])
     tweets = [Tweet({"id": 1}), Tweet({"id": 2})]
     tv = Termvectorer()
     print tv.create_term_vectors_as_dict(indices.INDEX_60k_FILTERED_LEMED, tweets)

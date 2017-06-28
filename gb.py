@@ -5,7 +5,7 @@ from xgboost import XGBClassifier
 
 import indices
 from csv_handling import load_tweet_csv, write_tweets_to_csv
-from tools import get_binary_feature, Termvectorer
+from features import get_binary_feature, Termvectorer
 from tweet import Tweet
 import numpy as np
 import sys
