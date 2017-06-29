@@ -5,7 +5,8 @@ from xgboost import XGBClassifier
 
 import indices
 from csv_handling import load_tweet_csv, write_tweets_to_csv
-from features import get_binary_feature, Termvectorer
+from features import get_binary_feature, Termvectorer, merge_numpy_array_features, merge_numpy_dict_features
+from rating import Rater
 from tweet import Tweet
 import numpy as np
 import sys
@@ -53,13 +54,11 @@ class GB:
                 print "GB analysed %d of %d" % (i, len(tweets))
         return result
 
-    def fit_and_predict(self, train_tweets, test_tweets):
+    @staticmethod
+    def fit_and_predict(train_tweets, test_tweets, create_features_func):
         """reduces the memory a lot"""
-        print "fetching termvectors"
-        start = time.time()
-        x = self._tv.create_term_vectors_as_array(self._train_index, train_tweets)
-        test_term_vectors = self._tv.create_term_vectors_as_dict(self._test_index, test_tweets)
-        print "finished termvectors", time.time() - start
+        x_train, x_test = create_features_func(train_tweets, test_tweets)
+
         result = {tweet.get_id(): Tweet().set_id(tweet.get_id()) for tweet in test_tweets}
         for k in Tweet.get_all_keys():
             print "fitting %s" % k
@@ -70,26 +69,23 @@ class GB:
                 ys.append(y)
                 weights.append(weight * 100)
             model = XGBClassifier()
-            model.fit(x, np.array(ys), sample_weight=np.array(weights))
+            model.fit(x_train, np.array(ys), sample_weight=np.array(weights))
             print "predicting %s" % k
             for tweet in test_tweets:
-                predict = model.predict_proba(np.array([test_term_vectors[tweet.get_id()]]))
+                predict = model.predict_proba(np.array([x_test[tweet.get_id()]]))
                 result[tweet.get_id()][k] = predict[0][1]
         return [r.normalize() for r in result.values()]
 
-    def fit_and_predict_multi_class(self, train_tweets, test_tweets):
-        print "fetching termvectors"
-        start = time.time()
-        x = self._tv.create_term_vectors_as_array(self._train_index, train_tweets)
-        test_term_vectors = self._tv.create_term_vectors_as_dict(self._test_index, test_tweets)
-        print "finished termvectors", time.time() - start
-        result = {tweet.get_id(): Tweet().set_id(tweet.get_id()) for tweet in test_tweets}
+    @staticmethod
+    def fit_and_predict_multi_class(train_tweets, test_tweets, create_features_func):
+        x_train, x_test = create_features_func(train_tweets, test_tweets)
 
+        result = {tweet.get_id(): Tweet().set_id(tweet.get_id()) for tweet in test_tweets}
         print "fitting s"
         model = XGBClassifier()
-        x_s = x
+        x_s = x_train
         for i in range(len(Tweet.get_s_keys()) - 1):
-            x_s = np.append(x_s, x, axis=0)
+            x_s = np.append(x_s, x_train, axis=0)
         ys = []
         weights = []
         for k in Tweet.get_s_keys():
@@ -98,9 +94,9 @@ class GB:
                 ys.append(k_index)
                 weights.append(tweet[k] * 100)
         model.fit(x_s, np.array(ys), sample_weight=np.array(weights))
-
+        print "predicting s"
         for tweet in test_tweets:
-            predict = model.predict_proba(np.array([test_term_vectors[tweet.get_id()]]))
+            predict = model.predict_proba(np.array([x_test[tweet.get_id()]]))
             i = 0
             for k in Tweet.get_s_keys():
                 result[tweet.get_id()][k] = predict[0][i]
@@ -109,9 +105,9 @@ class GB:
 
         print "fitting w"
         model = XGBClassifier()
-        x_w = x
+        x_w = x_train
         for i in range(len(Tweet.get_w_keys()) - 1):
-            x_w = np.append(x_w, x, axis=0)
+            x_w = np.append(x_w, x_train, axis=0)
         ys = []
         weights = []
         for k in Tweet.get_w_keys():
@@ -120,8 +116,9 @@ class GB:
                 ys.append(k_index)
                 weights.append(tweet[k] * 100)
         model.fit(x_w, np.array(ys), sample_weight=np.array(weights))
+        print "predicting w"
         for tweet in test_tweets:
-            predict = model.predict_proba(np.array([test_term_vectors[tweet.get_id()]]))
+            predict = model.predict_proba(np.array([x_test[tweet.get_id()]]))
             i = 0
             for k in Tweet.get_w_keys():
                 result[tweet.get_id()][k] = predict[0][i]
@@ -137,12 +134,47 @@ class GB:
                 ys.append(y)
                 weights.append(weight * 100)
             model = XGBClassifier()
-            model.fit(x, np.array(ys), sample_weight=np.array(weights))
+            model.fit(x_train, np.array(ys), sample_weight=np.array(weights))
             print "predicting %s" % k
             for tweet in test_tweets:
-                predict = model.predict_proba(np.array([test_term_vectors[tweet.get_id()]]))
+                predict = model.predict_proba(np.array([x_test[tweet.get_id()]]))
                 result[tweet.get_id()][k] = predict[0][1]
+
         return [r.normalize() for r in result.values()]
+
+    def create_wordlist_feature(self, train_tweets, test_tweets):
+        print "fetching termvectors"
+        start_term = time.time()
+        x_train = self._tv.create_term_vectors_as_array(self._train_index, train_tweets)
+        x_test = self._tv.create_term_vectors_as_dict(self._test_index, test_tweets)
+        print "finished termvectors", time.time() - start_term
+        return x_train, x_test
+
+    @staticmethod
+    def create_tense_feature(train_tweets, test_tweets):
+        print "creating tensevectors"
+        start_tense = time.time()
+        result = Rater.tense_as_array_feature(train_tweets), Rater.tense_as_dict_feature(test_tweets)
+        print "finished tensevectors", time.time() - start_tense
+        return result
+
+    @staticmethod
+    def create_sentiment_feature(train_tweets, test_tweets):
+        print "creating sentimentvectors"
+        start_tense = time.time()
+        result = Rater.sentiment_as_array_feature(train_tweets), Rater.sentiment_as_dict_feature(test_tweets)
+        print "finished sentimentvectors", time.time() - start_tense
+        return result
+
+    def create_all_features(self, train_tweets, test_tweets):
+        x_train, x_test = self.create_wordlist_feature(train_tweets, test_tweets)
+        x_tense_train, x_tense_test = self.create_tense_feature(train_tweets, test_tweets)
+        x_sentiment_train, x_sentiment_test = self.create_sentiment_feature(train_tweets, test_tweets)
+
+        x_train = merge_numpy_array_features([x_train, x_tense_train, x_sentiment_train])
+        x_test = merge_numpy_dict_features([x_test, x_tense_test, x_sentiment_test])
+
+        return x_train, x_test
 
 
 if __name__ == '__main__':
@@ -161,7 +193,8 @@ if __name__ == '__main__':
         print "*" * 20 + index + "*" * 20
         gbm = GB(index, index.replace("_60k_", "_all_").replace("_certain", ""))
         if less_mem:
-            result_tweets = gbm.fit_and_predict_multi_class(trainings_tweets, testing_tweets)
+            result_tweets = gbm.fit_and_predict_multi_class(trainings_tweets, testing_tweets,
+                                                            gbm.create_all_features)
         else:
             print "starting fit"
             start = time.time()
@@ -172,7 +205,7 @@ if __name__ == '__main__':
             result_tweets = gbm.predict_proba(testing_tweets)
             print "finished fit", time.time() - start
         write_tweets_to_csv(result_tweets,
-                            index + "_gb_%d_percent_weighted_multi_class_normalized.csv" % number_of_trainings_tweets)
+                            index + "_gb_%d_percent_weighted_multi_class_tense_sentiment_normalized.csv" % number_of_trainings_tweets)
 
     if platform.system() == "Linux":
         f.close()

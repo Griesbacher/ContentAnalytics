@@ -8,20 +8,22 @@ from analyse import create_dict_from_tweets
 from csv_handling import load_tweet_csv, write_tweets_to_csv, get_index_from_filename
 from normalizer import Normalizer
 from nltk.corpus import wordnet
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from tweet import Tweet
+import numpy as np
 
 
 class Rater:
     _future_keywords = set([item for sublist in
-                            [word.lemma_names() for word in wordnet.synsets("tomorrow")]
-                            + [word.lemma_names() for word in wordnet.synsets("future")]
+                            [word.lemma_names() for word in wordnet.synsets("tomorrow")] +
+                            [word.lemma_names() for word in wordnet.synsets("future")]
                             for item in sublist])
     _present_keywords = set([item for sublist in
                              [word.lemma_names() for word in wordnet.synsets("today")]
                              for item in sublist])
     _past_keywords = set([item for sublist in
-                          [word.lemma_names() for word in wordnet.synsets("yesterday")]
-                          + [word.lemma_names() for word in wordnet.synsets("past")]
+                          [word.lemma_names() for word in wordnet.synsets("yesterday")] +
+                          [word.lemma_names() for word in wordnet.synsets("past")]
                           for item in sublist])
     _kind_keywords = {
         "k1": "clouds",
@@ -39,6 +41,7 @@ class Rater:
         "k15": "wind",
     }
     _kind_synonymes = dict()
+    _sid = SentimentIntensityAnalyzer()
 
     @staticmethod
     def determine_tense_input(text):
@@ -70,6 +73,46 @@ class Rater:
         if tense["present"] == 0 and tense["future"] == 0 and tense["past"] == 0:
             tweet["w3"] = 1
         return tweet
+
+    @staticmethod
+    def tense_as_array_feature(tweets):
+        # type: (list) -> np.array
+        result = np.empty((len(tweets), 3), dtype="int8")
+        for i in range(len(tweets)):
+            tense = Rater.determine_tense_input(tweets[i].get_tweet())
+            result[i] = np.array(tense.values(), dtype="int8")
+        return result
+
+    @staticmethod
+    def tense_as_dict_feature(tweets):
+        # type: (list) -> dict
+        result = dict()
+        for tweet in tweets:
+            tense = Rater.determine_tense_input(tweet.get_tweet())
+            result[tweet.get_id()] = np.array(tense.values(), dtype="int8")
+        return result
+
+    @staticmethod
+    def get_sentiment_from_string(tweet):
+        # type: (str) -> np.array
+        result = Rater._sid.polarity_scores(tweet)
+        return np.array([int(v * 100) for v in result.values()], dtype="int8")
+
+    @staticmethod
+    def sentiment_as_array_feature(tweets):
+        # type: (list) -> np.array
+        result = np.empty((len(tweets), 4), dtype="int8")
+        for i in range(len(tweets)):
+            result[i] = Rater.get_sentiment_from_string(tweets[i].get_tweet())
+        return result
+
+    @staticmethod
+    def sentiment_as_dict_feature(tweets):
+        # type: (list) -> dict
+        result = dict()
+        for tweet in tweets:
+            result[tweet.get_id()] = Rater.get_sentiment_from_string(tweet.get_tweet())
+        return result
 
     @staticmethod
     def is_weather_tweet(tweet):
@@ -223,5 +266,4 @@ def demo():
 
 
 if __name__ == '__main__':
-    filename = "index_60k_filtered_lemed_weighted_avg_normed_11.csv"
-    post_rate_tweet(filename)
+    print Rater.get_sentiment_from_string("Mild Monday best weather day of the week in Oklahoma: {link} #OKWX")
