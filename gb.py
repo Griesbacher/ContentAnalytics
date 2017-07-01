@@ -86,14 +86,16 @@ class GB:
         x_s = x_train
         for i in range(len(Tweet.get_s_keys()) - 1):
             x_s = np.append(x_s, x_train, axis=0)
-        ys = []
-        weights = []
+        ys = np.empty((len(train_tweets) * len(Tweet.get_s_keys()), 1), dtype="int8")
+        weights = np.empty((len(train_tweets) * len(Tweet.get_s_keys()), 1), dtype="int8")
+        i = 0
         for k in Tweet.get_s_keys():
             k_index = Tweet.get_s_keys().index(k)
             for tweet in train_tweets:
-                ys.append(k_index)
-                weights.append(tweet[k] * 100)
-        model.fit(x_s, np.array(ys), sample_weight=np.array(weights))
+                ys[i] = k_index
+                weights[i] = tweet[k] * 100
+                i += 1
+        model.fit(x_s, ys, sample_weight=weights)
         print "predicting s"
         for tweet in test_tweets:
             predict = model.predict_proba(np.array([x_test[tweet.get_id()]]))
@@ -108,14 +110,16 @@ class GB:
         x_w = x_train
         for i in range(len(Tweet.get_w_keys()) - 1):
             x_w = np.append(x_w, x_train, axis=0)
-        ys = []
-        weights = []
+        ys = np.empty((len(train_tweets) * len(Tweet.get_w_keys()), 1), dtype="int8")
+        weights = np.empty((len(train_tweets) * len(Tweet.get_w_keys()), 1), dtype="int8")
+        i = 0
         for k in Tweet.get_w_keys():
             k_index = Tweet.get_w_keys().index(k)
             for tweet in train_tweets:
-                ys.append(k_index)
-                weights.append(tweet[k] * 100)
-        model.fit(x_w, np.array(ys), sample_weight=np.array(weights))
+                ys[i] = k_index
+                weights[i] = tweet[k] * 100
+                i += 1
+            model.fit(x_w, ys, sample_weight=weights)
         print "predicting w"
         for tweet in test_tweets:
             predict = model.predict_proba(np.array([x_test[tweet.get_id()]]))
@@ -178,10 +182,6 @@ class GB:
 
 
 if __name__ == '__main__':
-    if platform.system() == "Linux":
-        f = open('gb.log', 'w')
-        sys.stdout = f
-
     all_tweets = load_tweet_csv("train.csv")
     trainings_tweets = all_tweets[:1000]
     number_of_trainings_tweets = len(trainings_tweets)
@@ -205,7 +205,4 @@ if __name__ == '__main__':
             result_tweets = gbm.predict_proba(testing_tweets)
             print "finished fit", time.time() - start
         write_tweets_to_csv(result_tweets,
-                            index + "_gb_%d_percent_weighted_multi_class_tense_sentiment_normalized.csv" % number_of_trainings_tweets)
-
-    if platform.system() == "Linux":
-        f.close()
+                            index + "_gb_%d_percent_weighted_multi_class_tense_sentiment_2_normalized.csv" % number_of_trainings_tweets)
