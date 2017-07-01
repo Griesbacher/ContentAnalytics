@@ -10,7 +10,6 @@ from rating import Rater
 from tweet import Tweet
 import numpy as np
 import sys
-import platform
 
 
 class GB:
@@ -86,8 +85,8 @@ class GB:
         x_s = x_train
         for i in range(len(Tweet.get_s_keys()) - 1):
             x_s = np.append(x_s, x_train, axis=0)
-        ys = np.empty((len(train_tweets) * len(Tweet.get_s_keys()), 1), dtype="int8")
-        weights = np.empty((len(train_tweets) * len(Tweet.get_s_keys()), 1), dtype="int8")
+        ys = np.empty(len(train_tweets) * len(Tweet.get_s_keys()), dtype="int8")
+        weights = np.empty(len(train_tweets) * len(Tweet.get_s_keys()), dtype="int8")
         i = 0
         for k in Tweet.get_s_keys():
             k_index = Tweet.get_s_keys().index(k)
@@ -110,8 +109,8 @@ class GB:
         x_w = x_train
         for i in range(len(Tweet.get_w_keys()) - 1):
             x_w = np.append(x_w, x_train, axis=0)
-        ys = np.empty((len(train_tweets) * len(Tweet.get_w_keys()), 1), dtype="int8")
-        weights = np.empty((len(train_tweets) * len(Tweet.get_w_keys()), 1), dtype="int8")
+        ys = np.empty(len(train_tweets) * len(Tweet.get_w_keys()), dtype="int8")
+        weights = np.empty(len(train_tweets) * len(Tweet.get_w_keys()), dtype="int8")
         i = 0
         for k in Tweet.get_w_keys():
             k_index = Tweet.get_w_keys().index(k)
