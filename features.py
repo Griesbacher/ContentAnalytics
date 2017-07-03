@@ -1,5 +1,7 @@
 import time
 
+from nltk import ngrams
+
 import indices
 from tweet import Tweet
 import numpy as np
@@ -100,6 +102,16 @@ def merge_numpy_array_features(features_list, dtype="int8"):
     for i in range(length):
         result[i] = np.concatenate([f[i] for f in features_list])
     return result
+
+
+def get_ngrams(tweet, n=2):
+    """
+    Generate ngrams from the tweet text
+    :param tweet: the tweet to create ngrams for
+    :param n: the length of the ngrams
+    :return: a list of ngrams
+    """
+    return ["".join(dat) for dat in ngrams(tweet.get_tweet(), n)]
 
 
 if __name__ == '__main__':
