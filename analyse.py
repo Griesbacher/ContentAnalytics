@@ -32,11 +32,14 @@ MODE_HUMAN = 1
 MODE_MARKDOWN = 2
 MODE_MARKDOWN_ALL = 3
 printed_header = False
-best = {k: {"value": sys.maxint, "file": ""} for k in Tweet.get_all_keys()}
+best = {k: {"value": sys.maxint, "file": "None"} for k in Tweet.get_all_keys()}
 
 
-def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN, extended=False):
+def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN, extended=False, expected_tweets=17947):
     calc_tweets = load_tweet_csv(filename=result_csv, use_cache=False, use_pickle=False)
+    if abs(len(calc_tweets) - expected_tweets) > 2:
+        raise Exception(
+            "The amount of tweets ( %d ) does not match the expected ( %d )." % (len(calc_tweets), expected_tweets))
     result_csv = os.path.basename(result_csv)
     real_tweets = load_tweet_csv(filename=train_csv)
 
@@ -137,7 +140,7 @@ def natural_sort(l):
     return sorted(l, key=alphanum_key)
 
 
-def analyse_all(extended, folder=".", test_csv=indexer.TRAININGS_DATA_FILE):
+def analyse_all(extended, folder=".", test_csv=indexer.TRAININGS_DATA_FILE, expected_tweets=17947):
     files = find_csv_filenames(folder)
     if indexer.TRAININGS_DATA_FILE in files:
         files.pop(files.index(indexer.TRAININGS_DATA_FILE))
@@ -145,11 +148,7 @@ def analyse_all(extended, folder=".", test_csv=indexer.TRAININGS_DATA_FILE):
         files.pop(files.index(indexer.TEST_DATA_FILE))
     for csv_file in natural_sort(files):
         if os.path.isfile(csv_file):
-            analyse_csv(csv_file, test_csv, MODE_MARKDOWN_ALL, extended=extended)
-            try:
-                analyse_csv(csv_file, test_csv, MODE_MARKDOWN_ALL, extended=extended)
-            except Exception as e:
-                print "Exception(%s) in file: %s " % (e.message, csv_file)
+            analyse_csv(csv_file, test_csv, MODE_MARKDOWN_ALL, extended=extended, expected_tweets=expected_tweets)
         else:
             print "File does not exist: %s" % csv_file
     print "\n\n"
@@ -165,5 +164,7 @@ if __name__ == '__main__':
                         default=indexer.TRAININGS_DATA_FILE, action="store")
     parser.add_argument('--csv_folder', metavar='file', type=str, nargs='?', help='file path to the csv folder',
                         default=".", action="store")
+    parser.add_argument('--expected_tweets', type=int, nargs='?', help='amount of tweets to check',
+                        default=17947, action="store")
     args = parser.parse_args()
     analyse_all(True, folder=args.csv_folder, test_csv=args.test_csv)
