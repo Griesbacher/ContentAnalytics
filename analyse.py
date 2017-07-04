@@ -1,6 +1,12 @@
+import argparse
+import os
 from os import listdir
 
 import re
+
+import sys
+from pprint import pprint
+
 from sklearn.metrics import mean_squared_error
 
 import indexer
@@ -26,10 +32,12 @@ MODE_HUMAN = 1
 MODE_MARKDOWN = 2
 MODE_MARKDOWN_ALL = 3
 printed_header = False
+best = {k: {"value": sys.maxint, "file": ""} for k in Tweet.get_all_keys()}
 
 
 def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN, extended=False):
     calc_tweets = load_tweet_csv(filename=result_csv, use_cache=False, use_pickle=False)
+    result_csv = os.path.basename(result_csv)
     real_tweets = load_tweet_csv(filename=train_csv)
 
     dict_calc_tweets = create_dict_from_tweets(calc_tweets)
@@ -81,6 +89,10 @@ def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN, extended=False):
             k: calc_root_mean_squared_error(rmse_single_keys_real_values[k], rmse_single_keys_calc_values[k])
             for k in Tweet.get_all_keys()
             }
+        for key, value in single_keys.iteritems():
+            if best[key]["value"] > value:
+                best[key]["value"] = value
+                best[key]["file"] = result_csv
 
     if mode == MODE_HUMAN:
         print "--- %s ---" % result_csv
@@ -115,7 +127,7 @@ def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN, extended=False):
 def find_csv_filenames(path_to_dir, suffix=".csv"):
     """https://stackoverflow.com/questions/9234560/find-all-csv-files-in-a-directory-using-python"""
     filenames = listdir(path_to_dir)
-    return [filename for filename in filenames if filename.endswith(suffix)]
+    return [os.path.join(path_to_dir, filename) for filename in filenames if filename.endswith(suffix)]
 
 
 def natural_sort(l):
@@ -125,17 +137,33 @@ def natural_sort(l):
     return sorted(l, key=alphanum_key)
 
 
-def analyse_all(extended):
-    files = find_csv_filenames(".")
-    files.pop(files.index(indexer.TRAININGS_DATA_FILE))
-    files.pop(files.index(indexer.TEST_DATA_FILE))
+def analyse_all(extended, folder=".", test_csv=indexer.TRAININGS_DATA_FILE):
+    files = find_csv_filenames(folder)
+    if indexer.TRAININGS_DATA_FILE in files:
+        files.pop(files.index(indexer.TRAININGS_DATA_FILE))
+    if indexer.TEST_DATA_FILE in files:
+        files.pop(files.index(indexer.TEST_DATA_FILE))
     for csv_file in natural_sort(files):
-        try:
-            analyse_csv(csv_file, indexer.TRAININGS_DATA_FILE, MODE_MARKDOWN_ALL, extended=extended)
-        except Exception as e:
-            print "Exception(%s) in file: %s " % (e.message, csv_file)
+        if os.path.isfile(csv_file):
+            analyse_csv(csv_file, test_csv, MODE_MARKDOWN_ALL, extended=extended)
+            try:
+                analyse_csv(csv_file, test_csv, MODE_MARKDOWN_ALL, extended=extended)
+            except Exception as e:
+                print "Exception(%s) in file: %s " % (e.message, csv_file)
+        else:
+            print "File does not exist: %s" % csv_file
+    print "\n\n"
+    print "| Key | Value | File |"
+    print "| --- | ----- | ---- |"
+    for key, values in best.iteritems():
+        print "| %s | %s | %s |" % (key, values["value"], values["file"])
 
 
 if __name__ == '__main__':
-    analyse_all(True)
-    # analyse_csv("index_60k_filtered_lemed_weighted_avg_tense_11.csv", indexer.TRAININGS_DATA_FILE)
+    parser = argparse.ArgumentParser(description='Analyse result csv.')
+    parser.add_argument('--test_csv', metavar='file', type=str, nargs='?', help='file path to the train csv file',
+                        default=indexer.TRAININGS_DATA_FILE, action="store")
+    parser.add_argument('--csv_folder', metavar='file', type=str, nargs='?', help='file path to the csv folder',
+                        default=".", action="store")
+    args = parser.parse_args()
+    analyse_all(True, folder=args.csv_folder, test_csv=args.test_csv)
