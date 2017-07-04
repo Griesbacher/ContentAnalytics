@@ -121,3 +121,8 @@ if __name__ == '__main__':
     tv = Termvectorer()
     print tv.create_term_vectors_as_dict(indices.INDEX_60k_FILTERED_LEMED, tweets)
     print tv.create_term_vectors_as_array(indices.INDEX_60k_FILTERED_LEMED, tweets)
+
+    # ngrams beispeile
+    tweet = Tweet({"tweet": "ich bin hier du bist hier schnabeltier"})
+    print get_ngrams(tweet)
+    print get_ngrams(tweet, 4)
