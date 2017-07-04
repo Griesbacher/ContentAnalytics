@@ -10,6 +10,7 @@ from rating import Rater
 from tweet import Tweet
 import numpy as np
 import sys
+import filter
 
 
 class GB:
@@ -80,7 +81,7 @@ class GB:
         x_train, x_test = create_features_func(train_tweets, test_tweets)
 
         result = {tweet.get_id(): Tweet().set_id(tweet.get_id()) for tweet in test_tweets}
-        print "fitting s"
+        print "building s"
         model = XGBClassifier()
         x_s = x_train
         for i in range(len(Tweet.get_s_keys()) - 1):
@@ -94,6 +95,7 @@ class GB:
                 ys[i] = k_index
                 weights[i] = tweet[k] * 100
                 i += 1
+        print "fitting s"
         model.fit(x_s, ys, sample_weight=weights)
         print "predicting s"
         for tweet in test_tweets:
@@ -102,9 +104,11 @@ class GB:
             for k in Tweet.get_s_keys():
                 result[tweet.get_id()][k] = predict[0][i]
                 i += 1
+            if i % 1000 == 0:
+                print "predicting s - %s / %s" % (i, len(test_tweets))
         del x_s
 
-        print "fitting w"
+        print "building w"
         model = XGBClassifier()
         x_w = x_train
         for i in range(len(Tweet.get_w_keys()) - 1):
@@ -118,7 +122,8 @@ class GB:
                 ys[i] = k_index
                 weights[i] = tweet[k] * 100
                 i += 1
-            model.fit(x_w, ys, sample_weight=weights)
+        print "fitting w"
+        model.fit(x_w, ys, sample_weight=weights)
         print "predicting w"
         for tweet in test_tweets:
             predict = model.predict_proba(np.array([x_test[tweet.get_id()]]))
@@ -126,6 +131,8 @@ class GB:
             for k in Tweet.get_w_keys():
                 result[tweet.get_id()][k] = predict[0][i]
                 i += 1
+            if i % 1000 == 0:
+                print "predicting w - %s / %s" % (i, len(test_tweets))
         del x_w
 
         for k in Tweet.get_k_keys():
@@ -182,7 +189,7 @@ class GB:
 
 if __name__ == '__main__':
     all_tweets = load_tweet_csv("train.csv")
-    trainings_tweets = all_tweets[:1000]
+    trainings_tweets = filter.apply_filters(all_tweets[:2000], filter.filter_remove_weather_tweets)[:1000]
     number_of_trainings_tweets = len(trainings_tweets)
     testing_tweets = all_tweets[60000:]
     less_mem = True
@@ -190,6 +197,8 @@ if __name__ == '__main__':
     print "To test:", indices_to_test
     for index in indices_to_test:
         print "*" * 20 + index + "*" * 20
+        print "*" * 20 + time.strftime("%Y-%m-%d %H:%M") + "*" * 20
+        print "To learn %s to test %s" % (len(trainings_tweets), len(testing_tweets))
         gbm = GB(index, index.replace("_60k_", "_all_").replace("_certain", ""))
         if less_mem:
             result_tweets = gbm.fit_and_predict_multi_class(trainings_tweets, testing_tweets,
@@ -204,4 +213,4 @@ if __name__ == '__main__':
             result_tweets = gbm.predict_proba(testing_tweets)
             print "finished fit", time.time() - start
         write_tweets_to_csv(result_tweets,
-                            index + "_gb_%d_percent_weighted_multi_class_tense_sentiment_2_normalized.csv" % number_of_trainings_tweets)
+                            index + "_gb_%d_weatherfilterd_percent_weighted_multi_class_tense_sentiment_normalized.csv" % number_of_trainings_tweets)
