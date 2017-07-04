@@ -5,6 +5,7 @@ import time
 import indices
 from features import get_ngrams
 from normalizer import Normalizer
+from rating import Rater
 from tweet import Tweet
 
 unwanted_strings = ["{link}", "@mention", "#weather", "RT:", "RT "]
@@ -79,6 +80,10 @@ def filter_ngram6(tweet):
 
 def filter_ngram8(tweet):
     return tweet.set_tweet(",".join(get_ngrams(tweet, 8)))
+
+
+def filter_remove_weather_tweets(tweet):
+    return None if Rater.is_weather_tweet(tweet)[0] else tweet
 
 
 def apply_filters(tweets, *filters):

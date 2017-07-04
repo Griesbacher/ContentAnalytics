@@ -3,8 +3,6 @@ import re
 
 from elasticsearch import Elasticsearch
 
-import indexer
-from analyse import create_dict_from_tweets
 from csv_handling import load_tweet_csv, write_tweets_to_csv, get_index_from_filename
 from normalizer import Normalizer
 from nltk.corpus import wordnet
@@ -197,6 +195,7 @@ class Rater:
 
 def post_rate_weather_tweet(result_file, raw_file):
     # type: (str, str) -> None
+    from analyse import create_dict_from_tweets
     result_tweets = load_tweet_csv(result_file)
     raw_tweets = load_tweet_csv(raw_file)
     raw_dict = create_dict_from_tweets(raw_tweets)
@@ -233,7 +232,7 @@ def post_rate_tweet(result_file):
 
 
 def analyse_weather_tweets():
-    plain_tweets = load_tweet_csv(indexer.TRAININGS_DATA_FILE)
+    plain_tweets = load_tweet_csv("train.csv")
     all_tweets = dict()
     for tweet in plain_tweets:
         is_weather, match = Rater.is_weather_tweet(tweet)
