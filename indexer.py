@@ -81,6 +81,26 @@ def index_all_filtered_certain_stopped_spelled_lemed(tweets):
 
 
 @indexer
+def index_all_filtered_ngrammed2(tweets):
+    index_data_filtered(tweets, indices.INDEX_ALL_FILTERED_NGRAMMED2)
+
+
+@indexer
+def index_all_filtered_ngrammed4(tweets):
+    index_data_filtered(tweets, indices.INDEX_ALL_FILTERED_NGRAMMED4)
+
+
+@indexer
+def index_all_filtered_ngrammed6(tweets):
+    index_data_filtered(tweets, indices.INDEX_ALL_FILTERED_NGRAMMED6)
+
+
+@indexer
+def index_all_filtered_ngrammed8(tweets):
+    index_data_filtered(tweets, indices.INDEX_ALL_FILTERED_NGRAMMED8)
+
+
+@indexer
 def index_60k_filtered_stemed(tweets):
     index_data_filtered(tweets, indices.INDEX_60k_FILTERED_STEMED, 60000)
 
@@ -130,6 +150,26 @@ def index_60k_filtered_certain_stopped_spelled_lemed(tweets):
     index_data_filtered(tweets, indices.INDEX_60k_FILTERED_CERTAIN_STOPPED_SPELLED_LEMED, 60000)
 
 
+@indexer
+def index_60k_filtered_ngrammed2(tweets):
+    index_data_filtered(tweets, indices.INDEX_60k_FILTERED_NGRAMMED2, 60000)
+
+
+@indexer
+def index_60k_filtered_ngrammed4(tweets):
+    index_data_filtered(tweets, indices.INDEX_60k_FILTERED_NGRAMMED4, 60000)
+
+
+@indexer
+def index_60k_filtered_ngrammed6(tweets):
+    index_data_filtered(tweets, indices.INDEX_60k_FILTERED_NGRAMMED6, 60000)
+
+
+@indexer
+def index_60k_filtered_ngrammed8(tweets):
+    index_data_filtered(tweets, indices.INDEX_60k_FILTERED_NGRAMMED8, 60000)
+
+
 def index_everything(tweets):
     for index in indexers:
         index(tweets)
@@ -139,4 +179,4 @@ if __name__ == '__main__':
     es = Elasticsearch()
 
     all_tweets = load_tweet_csv(TRAININGS_DATA_FILE)
-    index_60k_filtered_stopped_spelled_lemed(all_tweets)
+    index_60k_filtered_ngrammed4(all_tweets)

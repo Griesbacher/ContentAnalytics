@@ -3,6 +3,7 @@ import multiprocessing
 import time
 
 import indices
+from features import get_ngrams
 from normalizer import Normalizer
 from tweet import Tweet
 
@@ -62,6 +63,22 @@ def filter_spell_checked(tweet):
 
 def filter_spell_checked_lem(tweet):
     return tweet.set_tweet(Normalizer.lem(tweet.get_tweet(), True))
+
+
+def filter_ngram2(tweet):
+    return tweet.set_tweet(",".join(get_ngrams(tweet, 2)))
+
+
+def filter_ngram4(tweet):
+    return tweet.set_tweet(",".join(get_ngrams(tweet, 4)))
+
+
+def filter_ngram6(tweet):
+    return tweet.set_tweet(",".join(get_ngrams(tweet, 6)))
+
+
+def filter_ngram8(tweet):
+    return tweet.set_tweet(",".join(get_ngrams(tweet, 8)))
 
 
 def apply_filters(tweets, *filters):
@@ -125,6 +142,22 @@ def get_filter_from_index(index):
                              filter_certainty,
                              filter_stop_remove,
                              filter_spell_checked_lem)
+
+    @index_filter(indices.INDEX_ALL_FILTERED_NGRAMMED2, indices.INDEX_60k_FILTERED_NGRAMMED2)
+    def filter_filtered_ngrammed2(tweets):
+        return apply_filters(tweets, filter_tweet, filter_ngram2)
+
+    @index_filter(indices.INDEX_ALL_FILTERED_NGRAMMED4, indices.INDEX_60k_FILTERED_NGRAMMED4)
+    def filter_filtered_ngrammed4(tweets):
+        return apply_filters(tweets, filter_tweet, filter_ngram4)
+
+    @index_filter(indices.INDEX_ALL_FILTERED_NGRAMMED6, indices.INDEX_60k_FILTERED_NGRAMMED6)
+    def filter_filtered_ngrammed6(tweets):
+        return apply_filters(tweets, filter_tweet, filter_ngram6)
+
+    @index_filter(indices.INDEX_ALL_FILTERED_NGRAMMED8, indices.INDEX_60k_FILTERED_NGRAMMED8)
+    def filter_filtered_ngrammed8(tweets):
+        return apply_filters(tweets, filter_tweet, filter_ngram8)
 
     def filter_none(tweets):
         return tweets
