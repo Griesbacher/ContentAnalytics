@@ -155,8 +155,8 @@ def analyse_all(extended, folder=".", test_csv=indexer.TRAININGS_DATA_FILE):
     print "\n\n"
     print "| Key | Value | File |"
     print "| --- | ----- | ---- |"
-    for key, values in best.iteritems():
-        print "| %s | %s | %s |" % (key, values["value"], values["file"])
+    for key in natural_sort(Tweet.get_all_keys()):
+        print "| %s | %s | %s |" % (key, best[key]["value"], best[key]["file"])
 
 
 if __name__ == '__main__':
