@@ -4,7 +4,7 @@ import argparse
 from analyse import create_dict_from_tweets
 from csv_handling import load_tweet_csv, write_tweets_to_csv
 from tweet import Tweet
-
+import os
 
 def combine_results(output_path, result_paths, mix):
     """
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     result_paths = args.file_paths
     output = args.o if args.o is not None else "combined_" + "_".join(
-        [path.split('.')[0] for path in result_paths]) + ".csv"
+        [os.path.basename(path).split('.')[0] for path in result_paths]) + ".csv"
     args_dict = vars(args)
     args_dict.pop('file_paths', None)
     args_dict.pop('o', None)
