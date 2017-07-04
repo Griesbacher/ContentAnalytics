@@ -109,6 +109,11 @@ class Tweet(dict):
         return ["w1", "w2", "w3", "w4"]
 
     @staticmethod
+    def get_key_prefixes():
+        # type: (None) -> list[str]
+        return ["k", "w", "s"]
+
+    @staticmethod
     def get_all_keys():
         # type: (None) -> list
         if Tweet._all_keys is None:
