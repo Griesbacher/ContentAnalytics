@@ -42,6 +42,10 @@ def load_tweet_csv(filename, use_pickle=True, use_cache=True):
 
 
 def write_tweets_to_csv(tweets, filename):
+    # type: (list, str) -> None
+    if tweets is None or len(tweets) == 0 or filename == "":
+        return
+    print "Writing %d tweets to %s" % (len(tweets), filename)
     header = ["id"]
     header.extend(Tweet.get_all_keys())
     with open(filename, 'wb') as testfile:
