@@ -78,20 +78,38 @@ class Tweet(dict):
 
         return self
 
+    @staticmethod
+    def __does_answer_contain_a_term_vector(answer):
+        return "term_vectors" in answer \
+               and "tweet" in answer["term_vectors"] \
+               and "terms" in answer["term_vectors"]["tweet"]
+
     def get_termvector(self, index, es=None):
         # type: (str, Elasticsearch) -> dict
         if es is None:
             es = Tweet._es
 
         answer = es.termvectors(index=index, doc_type='tweet', body={"fields": ["tweet"]}, id=self.get_id())
-        if "term_vectors" in answer \
-                and "tweet" in answer["term_vectors"] \
-                and "terms" in answer["term_vectors"]["tweet"]:
+        if self.__does_answer_contain_a_term_vector(answer):
             term_vector = {key.encode('ascii', 'ignore'): value["term_freq"] for key, value in
                            answer["term_vectors"]["tweet"]["terms"].items()}
             return term_vector
-        else:
-            return {}
+        elif "found" in answer and not answer["found"]:
+            from filter import get_filter_from_index
+            query = {
+                "doc": {"tweet": get_filter_from_index(index)([self])[0].get_tweet()},
+                "fields": ["tweet"],
+                "positions": False,
+                "offsets": False,
+                "field_statistics": False,
+                "term_statistics": False
+            }
+            answer = self._es.termvectors(index=index, doc_type='tweet', body=query)
+            if self.__does_answer_contain_a_term_vector(answer):
+                term_vector = {key: value["term_freq"] for key, value in
+                               answer["term_vectors"]["tweet"]["terms"].items()}
+                return term_vector
+        return {}
 
     @staticmethod
     def get_k_keys():
