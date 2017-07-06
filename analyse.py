@@ -39,7 +39,9 @@ def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN, extended=False, expected
     calc_tweets = load_tweet_csv(filename=result_csv, use_cache=False, use_pickle=False)
     if abs(len(calc_tweets) - expected_tweets) > 2:
         raise Exception(
-            "The amount of tweets ( %d ) does not match the expected ( %d )." % (len(calc_tweets), expected_tweets))
+            "The amount of tweets ( %d ) in file ( %s ) does not match the expected ( %d )."
+            % (len(calc_tweets), result_csv, expected_tweets)
+        )
     result_csv = os.path.basename(result_csv)
     real_tweets = load_tweet_csv(filename=train_csv)
 
@@ -142,11 +144,11 @@ def natural_sort(l):
 
 def analyse_all(extended, folder=".", test_csv=indexer.TRAININGS_DATA_FILE, expected_tweets=17947):
     files = find_csv_filenames(folder)
-    if indexer.TRAININGS_DATA_FILE in files:
-        files.pop(files.index(indexer.TRAININGS_DATA_FILE))
-    if indexer.TEST_DATA_FILE in files:
-        files.pop(files.index(indexer.TEST_DATA_FILE))
-    for csv_file in natural_sort(files):
+    filtered_files = []
+    for f in files:
+        if os.path.basename(f) not in [indexer.TRAININGS_DATA_FILE, indexer.TEST_DATA_FILE]:
+            filtered_files.append(f)
+    for csv_file in natural_sort(filtered_files):
         if os.path.isfile(csv_file):
             analyse_csv(csv_file, test_csv, MODE_MARKDOWN_ALL, extended=extended, expected_tweets=expected_tweets)
         else:
