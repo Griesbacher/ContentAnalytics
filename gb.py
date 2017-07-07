@@ -6,7 +6,7 @@ from xgboost import XGBClassifier
 import indices
 from analyse import create_dict_from_tweets
 from csv_handling import load_tweet_csv, write_tweets_to_csv
-from features import get_binary_feature, Termvectorer, merge_numpy_array_features, merge_numpy_dict_features
+from features import get_binary_feature, Termvectorer, merge_numpy_array_features, merge_numpy_dict_features, TfIdf
 from rating import Rater
 from tweet import Tweet
 import numpy as np
@@ -178,6 +178,14 @@ class GB:
         print "finished sentimentvectors", time.time() - start_tense
         return result
 
+    def create_tfidf_feature(self, train_tweets, test_tweets):
+        print "creating tfidfvectors"
+        start_tense = time.time()
+        result = TfIdf.get_feature_as_array(train_tweets, train_tweets, self._test_index), \
+                 TfIdf.get_feature_as_dict(train_tweets, test_tweets, self._test_index)
+        print "finished tfidfvectors", time.time() - start_tense
+        return result
+
     def create_all_features(self, train_tweets, test_tweets):
         x_train, x_test = self.create_wordlist_feature(train_tweets, test_tweets)
         x_tense_train, x_tense_test = self.create_tense_feature(train_tweets, test_tweets)
@@ -220,6 +228,10 @@ if __name__ == '__main__':
                                                 gbm.create_wordlist_feature)
             filename = index + "_gb_%d_weatherfilterd_percent_weighted_normalized.csv" % len(trainings_tweets)
         elif False:
+            trainings_tweets = all_tweets[:60000]
+            trainings_tweets = filter.apply_filters(trainings_tweets, filter.filter_remove_weather_tweets)[:20000]
+            gbm = GB(index, index.replace("_60k_", "_all_").replace("_certain", ""))
+
             result_tweets = gbm.fit_and_predict_multi_class(trainings_tweets, testing_tweets,
                                                             gbm.create_all_features)
             filename = index + "_gb_%d_percent_weighted_multi_class_tense_sentiment_normalized.csv" \
@@ -235,7 +247,7 @@ if __name__ == '__main__':
                                                 gbm.create_wordlist_feature)
             filename = index + "_gb_only_prelearned_%d_%s_percent_weighted_normalized.csv" \
                                % (len(trainings_tweets), os.path.basename(pre_learned_file))
-        elif True:
+        elif False:
             pre_learned_file = "../ergebnisse/index_60k_filtered_spelled_lemed_knn_weighted_avg_13.csv"
             pre_learned_tweets = load_tweet_csv(pre_learned_file)
             all_tweets_as_dict = create_dict_from_tweets(all_tweets)
@@ -247,6 +259,14 @@ if __name__ == '__main__':
                                                 gbm.create_wordlist_feature)
             filename = index + "_gb_prelearned_%d_%s_weatherfilterd_percent_weighted_normalized.csv" \
                                % (len(trainings_tweets), os.path.basename(pre_learned_file))
+        elif True:
+            trainings_tweets = all_tweets[:60000]
+            trainings_tweets = filter.apply_filters(trainings_tweets, filter.filter_remove_weather_tweets)[:1000]
+            gbm = GB(index, index.replace("_60k_", "_all_").replace("_certain", ""))
+
+            result_tweets = gbm.fit_and_predict(trainings_tweets, testing_tweets, gbm.create_tfidf_feature)
+            filename = index + "_gb_%d_percent_weighted_tfidf_normalized.csv" \
+                               % len(trainings_tweets)
 
         write_tweets_to_csv(result_tweets, filename)
-        print "*" * 20 + " %s took %dm " % (index, (time.time() - start_time_index)/60) + "*" * 20
+        print "*" * 20 + " %s took %dm " % (index, (time.time() - start_time_index) / 60) + "*" * 20

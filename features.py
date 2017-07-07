@@ -1,13 +1,15 @@
 import time
 
+from elasticsearch import Elasticsearch
 from nltk import ngrams
 
 import indices
+
 from tweet import Tweet
 import numpy as np
 
 
-class Termvectorer():
+class Termvectorer:
     def __init__(self):
         self._vocabulary = np.array(list(), dtype="string")
 
@@ -57,6 +59,84 @@ class Termvectorer():
         print "merging term vectors took:", time.time() - start
 
         return x
+
+
+class TfIdf:
+    _es = Elasticsearch()
+
+    @staticmethod
+    def get_feature_as_dict(train_tweets, test_tweets, index, es=None):
+        # type: (list, list,str, Elasticsearch) -> dict
+        if es is None:
+            es = TfIdf._es
+        from filter import get_filter_from_index
+        test_tweets = get_filter_from_index(index)(test_tweets)
+        train_tweet_indices = [tweet.get_id() for tweet in train_tweets]
+        result_dict = {tweet.get_id(): np.empty(len(train_tweets), dtype="uint8") for tweet in test_tweets}
+        i = 0
+        for tweet in test_tweets:
+            res = es.search(index=index,
+                            body={
+                                "query": {
+                                    "bool": {
+                                        "should": {
+                                            "match": {
+                                                "tweet": tweet.get_tweet()
+                                            }
+                                        },
+                                        "filter": {
+                                            "terms": {
+                                                "id": train_tweet_indices
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            )
+            for hit in res["hits"]["hits"]:
+                result_dict[tweet.get_id()][train_tweet_indices.index(hit["_source"]["id"])] = \
+                    min(hit["_score"] * 10, 255)
+            i += 1
+            if i % 1000 == 0:
+                print "Got %d from ES as dict" % i
+        return result_dict
+
+    @staticmethod
+    def get_feature_as_array(train_tweets, test_tweets, index, es=None):
+        # type: (list, list,str, Elasticsearch) -> np.array
+        if es is None:
+            es = TfIdf._es
+        from filter import get_filter_from_index
+        test_tweets = get_filter_from_index(index)(test_tweets)
+        train_tweet_indices = [tweet.get_id() for tweet in train_tweets]
+        result_array = np.empty((len(test_tweets), len(train_tweets)), dtype="uint8")
+        i = 0
+        for tweet in test_tweets:
+            res = es.search(index=index,
+                            body={
+                                "query": {
+                                    "bool": {
+                                        "should": {
+                                            "match": {
+                                                "tweet": tweet.get_tweet()
+                                            }
+                                        },
+                                        "filter": {
+                                            "terms": {
+                                                "id": train_tweet_indices
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            )
+            for hit in res["hits"]["hits"]:
+                result_array[i][train_tweet_indices.index(hit["_source"]["id"])] = \
+                    min(hit["_score"] * 10, 255)
+            i += 1
+            if i % 1000 == 0:
+                print "Got %d from ES as array" % i
+        return result_array
 
 
 def get_binary_feature(feature):
@@ -115,8 +195,23 @@ def get_ngrams(tweet, n=2):
 
 
 if __name__ == '__main__':
+    # TfIdf example
+    print TfIdf.get_feature_as_array(
+        [Tweet({"id": 1}), Tweet({"id": 2})],
+        [Tweet({"id": 9, "tweet": "@mention good morning sunshine rhode island"}), ],
+        indices.INDEX_60k_FILTERED
+    )
+    print TfIdf.get_feature_as_dict(
+        [Tweet({"id": 1}), Tweet({"id": 2})],
+        [Tweet({"id": 9, "tweet": "@mention good morning sunshine rhode island"}), ],
+        indices.INDEX_60k_FILTERED
+    )
+
+    # Merging Features example
     print merge_numpy_array_features([np.array([[1, 1], [2, 2]]), np.array([[3], [4]])])
     print merge_numpy_dict_features([{0: np.array([1, 1]), 2: np.array([2, 2])}, {0: np.array([3]), 2: np.array([4])}])
+
+    # Termvector example
     tweets = [Tweet({"id": 1}), Tweet({"id": 2})]
     tv = Termvectorer()
     print tv.create_term_vectors_as_dict(indices.INDEX_60k_FILTERED_LEMED, tweets)
