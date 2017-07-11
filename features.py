@@ -206,18 +206,19 @@ class Ngrams(object):
         result = {}
         ngrams = self._get_ngrams_and_build_voc(index, tweets)
         for id in ngrams:
-            id_result = {}
+            ngram_count = {}
             for ngram in ngrams[id]:
-                id_result[ngram] = id_result.get(ngram, 0) + 1
-            result[id] = id_result
+                ngram_count[ngram] = ngram_count.get(ngram, 0) + 1
+            ngram_dict = np.array(map(lambda v: int(ngram_count.get(v, 0)), self._vocabulary),
+                                        dtype="int8")
+            result[id] = ngram_dict
         return result
 
     def create_ngrams_as_array(self, index, tweets):
         ngram_dict = self.create_ngrams_as_dict(index, tweets)
         x = np.empty((len(tweets), len(self._vocabulary)), dtype="int8")
         for i in range(len(tweets)):
-            x[i] = np.array(map(lambda v: int(ngram_dict[tweets[i].get_id()].get(v, 0)), self._vocabulary),
-                            dtype="int8")
+            x[i] = ngram_dict[tweets[i].get_id()]
         return x
 
     @staticmethod
@@ -251,8 +252,8 @@ if __name__ == '__main__':
     # Termvector example
     # tweets = [Tweet({"id": 1}), Tweet({"id": 2})]
     # tv = Termvectorer()
-    # print tv.create_term_vectors_as_dict(indices.INDEX_60k_FILTERED_LEMED, tweets)
-    # print tv.create_term_vectors_as_array(indices.INDEX_60k_FILTERED_LEMED, tweets)
+    # print tv.create_term_vectors_as_dict(indices.INDEX_60k_FILTERED, tweets)
+    # print tv.create_term_vectors_as_array(indices.INDEX_60k_FILTERED, tweets)
 
     # ngrams beispeile
     # tweet = Tweet({"tweet": "ich bin hier du bist hier schnabeltier"})
