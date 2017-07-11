@@ -44,6 +44,7 @@ class Rater:
     @staticmethod
     def determine_tense_input(text):
         # type: (str) -> dict
+        # http://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html
         tokens = Normalizer.tokenize(text)
         tagged = nltk.pos_tag(tokens)
 
