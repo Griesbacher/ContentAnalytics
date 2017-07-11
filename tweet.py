@@ -120,7 +120,7 @@ class Tweet(dict):
             es = Tweet._es
 
         answer = es.get(index=index, id=self.get_id(), doc_type='tweet')
-        return answer['tweet']
+        return answer['_source']['tweet']
 
     @staticmethod
     def get_k_keys():
