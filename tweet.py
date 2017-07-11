@@ -111,6 +111,15 @@ class Tweet(dict):
                 return term_vector
         return {}
 
+    def get_tweet_text_from_es(self, index, es=None):
+        # type: (str, Elasticsearch) -> dict
+        if es is None:
+            es = Tweet._es
+
+        answer = es.get(index=index, id=self.get_id())
+        return answer['tweet']
+
+
     @staticmethod
     def get_k_keys():
         # type: (None) -> list
