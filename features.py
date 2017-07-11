@@ -184,40 +184,84 @@ def merge_numpy_array_features(features_list, dtype="int8"):
     return result
 
 
-def get_ngrams(tweet, n=2):
-    """
-    Generate ngrams from the tweet text
-    :param tweet: the tweet to create ngrams for
-    :param n: the length of the ngrams
-    :return: a list of ngrams
-    """
-    return ["".join(dat) for dat in ngrams(tweet.get_tweet(), n)]
+class Ngrams(object):
+    def __init__(self, n, vocabulary=None):
+        self._n = n
+        self._vocabulary = np.array(list() if vocabulary is None else vocabulary, dtype="string")
+
+    def _get_ngrams_and_build_voc(self, index, tweets):
+        if len(self._vocabulary) == 0:
+            result = {}
+            tmp_set = set()
+            for tweet in tweets:
+                ng = tweet.get_tweet_text_from_es(index)
+                tmp_set.update(ng)
+                result[tweet.get_id()] = (ng.split(','))
+            self._vocabulary = np.array(list(tmp_set))
+            return result
+        else:
+            return {tweet.get_id(): Ngrams.get_ngrams(tweet, self._n) for tweet in tweets}
+
+    def create_ngrams_as_dict(self, index, tweets):
+        result = {}
+        ngrams = self._get_ngrams_and_build_voc(index, tweets)
+        for id in ngrams:
+            id_result = {}
+            for ngram in ngrams[id]:
+                id_result[ngram] = id_result.get(ngram, 0) + 1
+            result[id] = id_result
+        return result
+
+    def create_ngrams_as_array(self, index, tweets):
+        ngram_dict = self.create_ngrams_as_dict(index, tweets)
+        x = np.empty((len(tweets), len(self._vocabulary)), dtype="int8")
+        for i in range(len(tweets)):
+            x[i] = np.array(map(lambda v: int(ngram_dict[tweets[i].get_id()].get(v, 0)), self._vocabulary),
+                            dtype="int8")
+        return x
+
+    @staticmethod
+    def get_ngrams(tweet, n=2):
+        """
+        Generate ngrams from the tweet text
+        :param tweet: the tweet to create ngrams for
+        :param n: the length of the ngrams
+        :return: a list of ngrams
+        """
+        return ["".join(dat) for dat in ngrams(tweet.get_tweet(), n)]
 
 
 if __name__ == '__main__':
     # TfIdf example
-    print TfIdf.get_feature_as_array(
-        [Tweet({"id": 1}), Tweet({"id": 2})],
-        [Tweet({"id": 9, "tweet": "@mention good morning sunshine rhode island"}), ],
-        indices.INDEX_60k_FILTERED
-    )
-    print TfIdf.get_feature_as_dict(
-        [Tweet({"id": 1}), Tweet({"id": 2})],
-        [Tweet({"id": 9, "tweet": "@mention good morning sunshine rhode island"}), ],
-        indices.INDEX_60k_FILTERED
-    )
+    # print TfIdf.get_feature_as_array(
+    #     [Tweet({"id": 1}), Tweet({"id": 2})],
+    #     [Tweet({"id": 9, "tweet": "@mention good morning sunshine rhode island"}), ],
+    #     indices.INDEX_60k_FILTERED
+    # )
+    # print TfIdf.get_feature_as_dict(
+    #     [Tweet({"id": 1}), Tweet({"id": 2})],
+    #     [Tweet({"id": 9, "tweet": "@mention good morning sunshine rhode island"}), ],
+    #     indices.INDEX_60k_FILTERED
+    # )
 
     # Merging Features example
-    print merge_numpy_array_features([np.array([[1, 1], [2, 2]]), np.array([[3], [4]])])
-    print merge_numpy_dict_features([{0: np.array([1, 1]), 2: np.array([2, 2])}, {0: np.array([3]), 2: np.array([4])}])
+    # print merge_numpy_array_features([np.array([[1, 1], [2, 2]]), np.array([[3], [4]])])
+    # print merge_numpy_dict_features([{0: np.array([1, 1]), 2: np.array([2, 2])}, {0: np.array([3]), 2: np.array([4])}])
 
     # Termvector example
-    tweets = [Tweet({"id": 1}), Tweet({"id": 2})]
-    tv = Termvectorer()
-    print tv.create_term_vectors_as_dict(indices.INDEX_60k_FILTERED_LEMED, tweets)
-    print tv.create_term_vectors_as_array(indices.INDEX_60k_FILTERED_LEMED, tweets)
+    # tweets = [Tweet({"id": 1}), Tweet({"id": 2})]
+    # tv = Termvectorer()
+    # print tv.create_term_vectors_as_dict(indices.INDEX_60k_FILTERED_LEMED, tweets)
+    # print tv.create_term_vectors_as_array(indices.INDEX_60k_FILTERED_LEMED, tweets)
 
     # ngrams beispeile
-    tweet = Tweet({"tweet": "ich bin hier du bist hier schnabeltier"})
-    print get_ngrams(tweet)
-    print get_ngrams(tweet, 4)
+    # tweet = Tweet({"tweet": "ich bin hier du bist hier schnabeltier"})
+    # print Ngrams.get_ngrams(tweet)
+    # print Ngrams.get_ngrams(tweet, 4)
+
+    tweets = [Tweet({"tweet": "lalalalele", "id": 1}), Tweet({"tweet": "lale", "id": 2})]
+    ngrammer = Ngrams(2, ["la", "le", "al", "el"])
+    print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
+
+    ngrammer = Ngrams(2, ["la", "le", "al", "el"])
+    print ngrammer.create_ngrams_as_array(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
