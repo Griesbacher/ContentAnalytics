@@ -5,7 +5,6 @@ from os import listdir
 import re
 
 import sys
-from pprint import pprint
 
 from sklearn.metrics import mean_squared_error
 
@@ -160,6 +159,19 @@ def analyse_all(extended, folder=".", test_csv=indexer.TRAININGS_DATA_FILE, expe
         print "| %s | %s | %s |" % (key, best[key]["value"], best[key]["file"])
 
 
+def create_best_csv(folder="."):
+    from result_combiner import combine_results
+    mix = {"k": [0], "s": [0], "w": [0]}
+    result_paths = []
+    i = 0
+    for key in best:
+        mix[key] = [i]
+        result_paths.append(os.path.join(folder, best[key]["file"]))
+        i += 1
+    if not os.path.isfile(os.path.join(folder, "combined_best.csv")):
+        combine_results(os.path.join(folder, "combined_best.csv"), result_paths, mix)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Analyse result csv.')
     parser.add_argument('--test_csv', metavar='file', type=str, nargs='?', help='file path to the train csv file',
@@ -170,3 +182,4 @@ if __name__ == '__main__':
                         default=17947, action="store")
     args = parser.parse_args()
     analyse_all(True, folder=args.csv_folder, test_csv=args.test_csv)
+    create_best_csv(args.csv_folder)
