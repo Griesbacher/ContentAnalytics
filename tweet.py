@@ -1,5 +1,6 @@
 import pprint
-
+import os
+import sys
 from elasticsearch import Elasticsearch
 
 
@@ -96,6 +97,7 @@ class Tweet(dict):
             return term_vector
         elif "found" in answer and not answer["found"]:
             from filter import get_filter_from_index
+            sys.stdout = open(os.devnull, 'w')
             query = {
                 "doc": {"tweet": get_filter_from_index(index)([self])[0].get_tweet()},
                 "fields": ["tweet"],
@@ -104,6 +106,7 @@ class Tweet(dict):
                 "field_statistics": False,
                 "term_statistics": False
             }
+            sys.stdout = sys.__stdout__
             answer = self._es.termvectors(index=index, doc_type='tweet', body=query)
             if self.__does_answer_contain_a_term_vector(answer):
                 term_vector = {key: value["term_freq"] for key, value in
@@ -118,7 +121,6 @@ class Tweet(dict):
 
         answer = es.get(index=index, id=self.get_id())
         return answer['tweet']
-
 
     @staticmethod
     def get_k_keys():
