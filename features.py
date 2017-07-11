@@ -195,7 +195,7 @@ class Ngrams(object):
             tmp_set = set()
             for tweet in tweets:
                 ng = tweet.get_tweet_text_from_es(index)
-                tmp_set.update(ng)
+                tmp_set.update(ng.split(','))
                 result[tweet.get_id()] = (ng.split(','))
             self._vocabulary = np.array(list(tmp_set))
             return result
@@ -264,5 +264,9 @@ if __name__ == '__main__':
     ngrammer = Ngrams(2, ["la", "le", "al", "el"])
     print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
 
-    ngrammer = Ngrams(2, ["la", "le", "al", "el"])
+    ngrammer = Ngrams(3, ["lal", "ala", "ale", "ele"])
     print ngrammer.create_ngrams_as_array(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
+
+    tweets = [Tweet({"id": 1}), Tweet({"id": 2})]
+    ngrammer = Ngrams(3)
+    print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
