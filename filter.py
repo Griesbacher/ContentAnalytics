@@ -3,7 +3,7 @@ import multiprocessing
 import time
 
 import indices
-from features import get_ngrams
+from features import Ngrams
 from normalizer import Normalizer
 from rating import Rater
 from tweet import Tweet
@@ -67,19 +67,19 @@ def filter_spell_checked_lem(tweet):
 
 
 def filter_ngram2(tweet):
-    return tweet.set_tweet(",".join(get_ngrams(tweet, 2)))
+    return tweet.set_tweet(",".join(Ngrams.get_ngrams(tweet, 2)))
 
 
 def filter_ngram4(tweet):
-    return tweet.set_tweet(",".join(get_ngrams(tweet, 4)))
+    return tweet.set_tweet(",".join(Ngrams.get_ngrams(tweet, 4)))
 
 
 def filter_ngram6(tweet):
-    return tweet.set_tweet(",".join(get_ngrams(tweet, 6)))
+    return tweet.set_tweet(",".join(Ngrams.get_ngrams(tweet, 6)))
 
 
 def filter_ngram8(tweet):
-    return tweet.set_tweet(",".join(get_ngrams(tweet, 8)))
+    return tweet.set_tweet(",".join(Ngrams.get_ngrams(tweet, 8)))
 
 
 def filter_remove_weather_tweets(tweet):

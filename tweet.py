@@ -115,7 +115,7 @@ class Tweet(dict):
         return {}
 
     def get_tweet_text_from_es(self, index, es=None):
-        # type: (str, Elasticsearch) -> dict
+        # type: (str, Elasticsearch) -> str
         if es is None:
             es = Tweet._es
 
