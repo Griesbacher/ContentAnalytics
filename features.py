@@ -1,12 +1,11 @@
 import time
 
+import numpy as np
 from elasticsearch import Elasticsearch
 from nltk import ngrams
 
 import indices
-
-from tweet import Tweet
-import numpy as np
+from csv_handling import load_tweet_csv
 
 
 class Termvectorer:
@@ -203,6 +202,15 @@ class Ngrams(object):
             return {tweet.get_id(): Ngrams.get_ngrams(tweet, self._n) for tweet in tweets}
 
     def create_ngrams_as_dict(self, index, tweets):
+        """
+        Creates ngrams from a list of tweets. If the vocabulary has not been built or provieded, the vocabulary is
+        built and the ngrams are taken from the es index. Otherwise, new ngrams are generated from the
+        provided tweet texts. If the vocabulary is already built , the tweets must be filtered with the same
+        filters as the index, to obtain sensible results, since this method does not perform any fitlering.
+        :param index: the es index
+        :param tweets: a list of tweets to get the ngrams for
+        :return: a dict with tweet ids as keys and ready to use ngram vectors as values
+        """
         result = {}
         ngrams = self._get_ngrams_and_build_voc(index, tweets)
         for id in ngrams:
@@ -215,6 +223,9 @@ class Ngrams(object):
         return result
 
     def create_ngrams_as_array(self, index, tweets):
+        """
+        Does the same thing as create_ngrams_as_dict, but returns an array instead of a dict.
+        """
         ngram_dict = self.create_ngrams_as_dict(index, tweets)
         x = np.empty((len(tweets), len(self._vocabulary)), dtype="int8")
         for i in range(len(tweets)):
@@ -260,13 +271,21 @@ if __name__ == '__main__':
     # print Ngrams.get_ngrams(tweet)
     # print Ngrams.get_ngrams(tweet, 4)
 
-    tweets = [Tweet({"tweet": "lalalalele", "id": 1}), Tweet({"tweet": "lale", "id": 2})]
-    ngrammer = Ngrams(2, ["la", "le", "al", "el"])
+    # tweets = [Tweet({"tweet": "lalalalele", "id": 1}), Tweet({"tweet": "lale", "id": 2})]
+    # ngrammer = Ngrams(2, ["la", "le", "al", "el"])
+    # print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
+    #
+    # ngrammer = Ngrams(3, ["lal", "ala", "ale", "ele"])
+    # print ngrammer.create_ngrams_as_array(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
+    #
+    # tweets = [Tweet({"id": 1}), Tweet({"id": 2})]
+    # ngrammer = Ngrams(3)
+    # print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
+
+    tweets = load_tweet_csv("train.csv")[:2]
+    print tweets
+    ngrammer = Ngrams(2)
     print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
-
-    ngrammer = Ngrams(3, ["lal", "ala", "ale", "ele"])
-    print ngrammer.create_ngrams_as_array(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
-
-    tweets = [Tweet({"id": 1}), Tweet({"id": 2})]
-    ngrammer = Ngrams(3)
+    # not quite right. the tweets should be filtered first, like the index. but that is not
+    # possible here, since there are cyclic imports everywhere.
     print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
