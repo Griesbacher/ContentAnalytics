@@ -6,7 +6,8 @@ from xgboost import XGBClassifier
 import indices
 from analyse import create_dict_from_tweets
 from csv_handling import load_tweet_csv, write_tweets_to_csv
-from features import get_binary_feature, Termvectorer, merge_numpy_array_features, merge_numpy_dict_features, TfIdf
+from features import get_binary_feature, Termvectorer, merge_numpy_array_features, merge_numpy_dict_features, TfIdf, \
+    Ngrams
 from rating import Rater
 from tweet import Tweet
 import numpy as np
@@ -16,11 +17,12 @@ import os
 
 
 class GB:
-    def __init__(self, train_index, test_index=None):
+    def __init__(self, train_index, test_index=None, n=2):
         self._all_models = {k: XGBClassifier() for k in Tweet.get_all_keys()}
         self._train_index = train_index
         self._test_index = train_index if test_index is None else test_index
         self._tv = Termvectorer()
+        self.n = n
 
     def fit(self, tweets):
         print "fetching termvectors"
@@ -186,6 +188,15 @@ class GB:
         print "finished tfidfvectors", time.time() - start_tense
         return result
 
+    def create_ngram_feature(self, train_tweets, test_tweets):
+        print "creating ngrams %d" % self.n
+        start_tense = time.time()
+        ngram = Ngrams(self.n)
+        result = ngram.create_ngrams_as_array(self._train_index, train_tweets), \
+                 ngram.create_ngrams_as_dict(self._train_index, test_tweets)
+        print "finished ngrams %d - %ds" % (self.n, time.time() - start_tense)
+        return result
+
     def create_all_features(self, train_tweets, test_tweets):
         x_train, x_test = self.create_wordlist_feature(train_tweets, test_tweets)
         x_tense_train, x_tense_test = self.create_tense_feature(train_tweets, test_tweets)
@@ -193,7 +204,6 @@ class GB:
 
         x_train = merge_numpy_array_features([x_train, x_tense_train, x_sentiment_train])
         x_test = merge_numpy_dict_features([x_test, x_tense_test, x_sentiment_test])
-
         return x_train, x_test
 
 
@@ -259,7 +269,7 @@ if __name__ == '__main__':
                                                 gbm.create_wordlist_feature)
             filename = index + "_gb_prelearned_%d_%s_weatherfilterd_percent_weighted_normalized.csv" \
                                % (len(trainings_tweets), os.path.basename(pre_learned_file))
-        elif True:
+        elif False:
             trainings_tweets = all_tweets[:60000]
             trainings_tweets = filter.apply_filters(trainings_tweets, filter.filter_remove_weather_tweets)[:1000]
             gbm = GB(index, index.replace("_60k_", "_all_").replace("_certain", ""))
@@ -267,6 +277,19 @@ if __name__ == '__main__':
             result_tweets = gbm.fit_and_predict(trainings_tweets, testing_tweets, gbm.create_tfidf_feature)
             filename = index + "_gb_%d_percent_weighted_tfidf_normalized.csv" \
                                % len(trainings_tweets)
+        elif True:
+            trainings_tweets = all_tweets[:60000]
+            trainings_tweets = filter.apply_filters(trainings_tweets, filter.filter_remove_weather_tweets)
+            for ngram_index in [indices.INDEX_ALL_FILTERED_NGRAMMED2, indices.INDEX_ALL_FILTERED_NGRAMMED4,
+                                indices.INDEX_ALL_FILTERED_NGRAMMED6, indices.INDEX_ALL_FILTERED_NGRAMMED8]:
+                gbm = GB(ngram_index, ngram_index)
+
+                result_tweets = gbm.fit_and_predict(trainings_tweets, testing_tweets, gbm.create_ngram_feature)
+                filename = ngram_index + "_gb_%d_percent_weighted_normalized.csv" \
+                                         % len(trainings_tweets)
+                write_tweets_to_csv(result_tweets, filename)
+            print "*" * 20 + " Ngramms took %dm " % ((time.time() - start_time_index) / 60) + "*" * 20
+            exit(0)
 
         write_tweets_to_csv(result_tweets, filename)
         print "*" * 20 + " %s took %dm " % (index, (time.time() - start_time_index) / 60) + "*" * 20
