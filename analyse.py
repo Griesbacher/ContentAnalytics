@@ -3,10 +3,12 @@ import os
 from os import listdir
 
 import re
-
+import platform
 import sys
 
+import numpy as np
 from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
 
 import indexer
 from csv_handling import load_tweet_csv
@@ -93,10 +95,11 @@ def analyse_csv(result_csv, train_csv, mode=MODE_HUMAN, extended=False, expected
             k: calc_root_mean_squared_error(rmse_single_keys_real_values[k], rmse_single_keys_calc_values[k])
             for k in Tweet.get_all_keys()
             }
-        for key, value in single_keys.iteritems():
-            if best[key]["value"] > value:
-                best[key]["value"] = value
-                best[key]["file"] = result_csv
+        if os.path.basename(result_csv) != "combined_best.csv":
+            for key, value in single_keys.iteritems():
+                if best[key]["value"] > value:
+                    best[key]["value"] = value
+                    best[key]["file"] = result_csv
 
     if mode == MODE_HUMAN:
         print "--- %s ---" % result_csv
@@ -141,7 +144,7 @@ def natural_sort(l):
     return sorted(l, key=alphanum_key)
 
 
-def analyse_all(extended, folder=".", test_csv=indexer.TRAININGS_DATA_FILE, expected_tweets=17947):
+def analyse_all(extended, folder=".", train_csv=indexer.TRAININGS_DATA_FILE, expected_tweets=17947):
     files = find_csv_filenames(folder)
     filtered_files = []
     for f in files:
@@ -149,7 +152,7 @@ def analyse_all(extended, folder=".", test_csv=indexer.TRAININGS_DATA_FILE, expe
             filtered_files.append(f)
     for csv_file in natural_sort(filtered_files):
         if os.path.isfile(csv_file):
-            analyse_csv(csv_file, test_csv, MODE_MARKDOWN_ALL, extended=extended, expected_tweets=expected_tweets)
+            analyse_csv(csv_file, train_csv, MODE_MARKDOWN_ALL, extended=extended, expected_tweets=expected_tweets)
         else:
             print "File does not exist: %s" % csv_file
     print "\n\n"
@@ -172,6 +175,38 @@ def create_best_csv(folder="."):
         combine_results(os.path.join(folder, "combined_best.csv"), result_paths, mix)
 
 
+def visualize_error(train_csv=indexer.TRAININGS_DATA_FILE, folder="."):
+    real_tweets = load_tweet_csv(filename=train_csv)
+    avg = []
+    std_dev = []
+    for key in natural_sort(best.keys()):
+        calc_tweets = load_tweet_csv(filename=os.path.join(folder, best[key]["file"]), use_cache=True, use_pickle=False)
+        dict_calc_tweets = create_dict_from_tweets(calc_tweets)
+        dict_real_tweets = create_dict_from_tweets(real_tweets)
+        diff = list()
+        for calc_id, calc_tweet in dict_calc_tweets.iteritems():
+            if calc_id in dict_real_tweets:
+                diff.append(calc_tweet[key] - dict_real_tweets[calc_id][key])
+        avg.append(sum(diff) / len(diff))
+        std_dev.append(np.array(diff).std())
+
+    my_dpi = 96
+    fig, ax = plt.subplots(figsize=(1500 / my_dpi, 500 / my_dpi), dpi=my_dpi)
+    width = 0.6
+    ind = np.arange(len(best.keys()))
+    rects1 = ax.bar(ind, avg, width, color='r', yerr=std_dev)
+    ax.set_ylabel('Avg. error')
+    ax.set_title('Bar: avg. error / Numbers(Lines): std dev')
+    ax.set_xticks(ind + width / 2)
+    ax.set_xticklabels((natural_sort(best.keys())))
+    for rect in rects1:
+        height = rect.get_height()
+        ax.text(rect.get_x() + rect.get_width() / 2., 2 * height, '%1.3f' % height, ha='center', va='bottom')
+    plt.savefig(os.path.join(folder, 'error.png'), dpi=my_dpi)
+    if platform.system() == "Windows":
+        plt.show()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Analyse result csv.')
     parser.add_argument('--test_csv', metavar='file', type=str, nargs='?', help='file path to the train csv file',
@@ -181,5 +216,6 @@ if __name__ == '__main__':
     parser.add_argument('--expected_tweets', type=int, nargs='?', help='amount of tweets to check',
                         default=17947, action="store")
     args = parser.parse_args()
-    analyse_all(True, folder=args.csv_folder, test_csv=args.test_csv)
+    analyse_all(True, folder=args.csv_folder, train_csv=args.test_csv)
     create_best_csv(args.csv_folder)
+    visualize_error(folder=args.csv_folder)
