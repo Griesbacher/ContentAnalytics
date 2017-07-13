@@ -1,3 +1,4 @@
+import string
 import time
 
 import numpy as np
@@ -196,7 +197,17 @@ class Ngrams(object):
                 ng = tweet.get_tweet_text_from_es(index)
                 tmp_set.update(ng.split(','))
                 result[tweet.get_id()] = (ng.split(','))
+            if self._n > 2:
+                print "Vocabulary size before shrinking: %d" % len(tmp_set)
+                printable = [c for c in string.punctuation + string.digits + string.whitespace]
+                numbers = set()
+                for gram in tmp_set:
+                    if any(char in printable for char in gram):
+                        numbers.add(gram)
+                for number in numbers:
+                    tmp_set.remove(number)
             self._vocabulary = np.array(list(tmp_set))
+            print "Vocabulary size: %d" % len(self._vocabulary)
             return result
         else:
             return {tweet.get_id(): Ngrams.get_ngrams(tweet, self._n) for tweet in tweets}
@@ -217,8 +228,7 @@ class Ngrams(object):
             ngram_count = {}
             for ngram in ngrams[id]:
                 ngram_count[ngram] = ngram_count.get(ngram, 0) + 1
-            ngram_dict = np.array(map(lambda v: int(ngram_count.get(v, 0)), self._vocabulary),
-                                        dtype="int8")
+            ngram_dict = np.array(map(lambda v: int(ngram_count.get(v, 0)), self._vocabulary), dtype="int8")
             result[id] = ngram_dict
         return result
 
