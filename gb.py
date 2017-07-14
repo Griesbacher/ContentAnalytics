@@ -293,7 +293,7 @@ if __name__ == '__main__':
             trainings_tweets = filter.apply_filters(trainings_tweets, filter.filter_remove_weather_tweets)
             for ngram_index in [indices.INDEX_ALL_FILTERED_NGRAMMED2, indices.INDEX_ALL_FILTERED_NGRAMMED4,
                                 indices.INDEX_ALL_FILTERED_NGRAMMED6, indices.INDEX_ALL_FILTERED_NGRAMMED8]:
-                gbm = GB(ngram_index, ngram_index)
+                gbm = GB(ngram_index, ngram_index, n=int(ngram_index[-1]))
 
                 result_tweets = gbm.fit_and_predict(trainings_tweets, testing_tweets, gbm.create_ngram_feature)
                 filename = ngram_index + "_gb_%d_percent_weighted_normalized.csv" \
@@ -305,7 +305,7 @@ if __name__ == '__main__':
             trainings_tweets = all_tweets[:60000]
             trainings_tweets = filter.apply_filters(trainings_tweets, filter.filter_remove_weather_tweets)
 
-            gbm = GB(index, index)
+            gbm = GB(index, index, n=int(index[-1]))
 
             result_tweets = gbm.fit_and_predict(trainings_tweets, testing_tweets,
                                                 gbm.create_ngram_sentiment_tense_feature)
