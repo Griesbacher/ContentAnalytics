@@ -8,9 +8,10 @@ import sys
 
 import numpy as np
 from sklearn.metrics import mean_squared_error
+if platform.system() != "Windows":
+    import matplotlib
+    matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')
 
 import indexer
 from csv_handling import load_tweet_csv
