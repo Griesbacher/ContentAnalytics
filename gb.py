@@ -197,6 +197,17 @@ class GB:
         print "finished ngrams %d - %ds" % (self.n, time.time() - start_tense)
         return result
 
+    def create_ngram_sentiment_tense_feature(self, train_tweets, test_tweets):
+        print "creating ngram_sentiment_tense %d" % self.n
+        start_tense = time.time()
+        ngram_train, ngram_test = self.create_ngram_feature(train_tweets, test_tweets)
+        x_tense_train, x_tense_test = self.create_tense_feature(train_tweets, test_tweets)
+        x_sentiment_train, x_sentiment_test = self.create_sentiment_feature(train_tweets, test_tweets)
+        x_train = merge_numpy_array_features([ngram_train, x_tense_train, x_sentiment_train])
+        x_test = merge_numpy_dict_features([ngram_test, x_tense_test, x_sentiment_test])
+        print "finished ngram_sentiment_tense %d - %ds" % (self.n, time.time() - start_tense)
+        return x_train, x_test
+
     def create_all_features(self, train_tweets, test_tweets):
         x_train, x_test = self.create_wordlist_feature(train_tweets, test_tweets)
         x_tense_train, x_tense_test = self.create_tense_feature(train_tweets, test_tweets)
@@ -277,7 +288,7 @@ if __name__ == '__main__':
             result_tweets = gbm.fit_and_predict(trainings_tweets, testing_tweets, gbm.create_tfidf_feature)
             filename = index + "_gb_%d_percent_weighted_tfidf_normalized.csv" \
                                % len(trainings_tweets)
-        elif True:
+        elif False:
             trainings_tweets = all_tweets[:60000]
             trainings_tweets = filter.apply_filters(trainings_tweets, filter.filter_remove_weather_tweets)
             for ngram_index in [indices.INDEX_ALL_FILTERED_NGRAMMED2, indices.INDEX_ALL_FILTERED_NGRAMMED4,
@@ -290,6 +301,15 @@ if __name__ == '__main__':
                 write_tweets_to_csv(result_tweets, filename)
             print "*" * 20 + " Ngramms took %dm " % ((time.time() - start_time_index) / 60) + "*" * 20
             exit(0)
+        elif True:
+            trainings_tweets = all_tweets[:60000]
+            trainings_tweets = filter.apply_filters(trainings_tweets, filter.filter_remove_weather_tweets)
+
+            gbm = GB(index, index)
+
+            result_tweets = gbm.fit_and_predict(trainings_tweets, testing_tweets,
+                                                gbm.create_ngram_sentiment_tense_feature)
+            filename = index + "_gb_%d_percent_weighted_tense_sentiment_normalized.csv" % len(trainings_tweets)
 
         write_tweets_to_csv(result_tweets, filename)
         print "*" * 20 + " %s took %dm " % (index, (time.time() - start_time_index) / 60) + "*" * 20
