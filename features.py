@@ -194,7 +194,10 @@ class Ngrams(object):
             result = {}
             tmp_set = set()
             for tweet in tweets:
-                ng = tweet.get_tweet_text_from_es(index)
+                if self._n > 4:
+                    ng = tweet.get_tweet_text_from_es(index).lower()
+                else:
+                    ng = tweet.get_tweet_text_from_es(index)
                 tmp_set.update(ng.split(','))
                 result[tweet.get_id()] = (ng.split(','))
             if self._n > 2:
@@ -250,7 +253,10 @@ class Ngrams(object):
         :param n: the length of the ngrams
         :return: a list of ngrams
         """
-        return ["".join(dat) for dat in ngrams(tweet.get_tweet(), n)]
+        if n > 4:
+            return ["".join(dat) for dat in ngrams(tweet.get_tweet().lower(), n)]
+        else:
+            return ["".join(dat) for dat in ngrams(tweet.get_tweet(), n)]
 
 
 if __name__ == '__main__':
