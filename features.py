@@ -7,6 +7,8 @@ from nltk import ngrams
 
 import indices
 from csv_handling import load_tweet_csv
+from rating import Rater
+from tweet import Tweet
 
 
 class Termvectorer:
@@ -59,6 +61,77 @@ class Termvectorer:
         print "merging term vectors took:", time.time() - start
 
         return x
+
+    def build_vocabulary_with_sentiments(self, index, tweets):
+        print "getting termvectors from es"
+        termvectors = {}
+        empty_vectors = 0
+        for tweet in tweets:
+            termvectors[tweet.get_id()] = tweet.get_termvector(index)
+            if len(termvectors[tweet.get_id()]) == 0:
+                empty_vectors += 1
+        if empty_vectors > 5:
+            print "!!!!! %d Tweets did not return a termvector for index: %s!!!!!" % (empty_vectors, index)
+
+        vocabulary = set()
+        for term_vector in termvectors.values():
+            vocabulary.update(term_vector.keys())
+        vocabulary_list = list(vocabulary)
+        vocabulary_dict = {}
+        for word in vocabulary_list:
+            sentiment_scores = Rater.get_sentiment_from_string(word)
+            vocabulary_dict[word] = sentiment_scores[:3]
+        self._vocabulary = vocabulary_dict
+        return termvectors
+
+    def create_sentiment_vectors_as_array(self, index, tweets, with_count):
+        termvectors = self.build_vocabulary_with_sentiments(index, tweets)
+        if with_count:
+            length = 4
+        else:
+            length = 3
+
+        x = np.empty((len(tweets), len(self._vocabulary) * length), dtype="int8")
+        for i in range(len(tweets)):
+            temp_vector = []
+            for key in self._vocabulary:
+                if with_count:
+                    if termvectors[tweets[i].get_id()].get(key) is not None:
+                        feature_array = (self._vocabulary[key][:])
+                        feature_array = np.insert(feature_array, 0, termvectors[tweets[i].get_id()].get(key))
+                        temp_vector.append(feature_array)
+                    else:
+                        temp_vector.append([0, 0, 0, 0])
+                else:
+                    if termvectors[tweets[i].get_id()].get(key) is not None:
+                        temp_vector.append(self._vocabulary[key])
+                    else:
+                        temp_vector.append([0, 0, 0])
+            temp_vector = np.ravel(temp_vector)
+            x[i] = np.array(temp_vector, dtype="int8")
+        return x
+
+    def create_sentiment_vectors_as_dict(self, index, tweets, with_count):
+        termvectors = self.build_vocabulary_with_sentiments(index, tweets)
+        for tweet_id in termvectors:
+            temp_vector = []
+            for key in self._vocabulary:
+                if with_count:
+                    if termvectors[tweet_id].get(key) is not None:
+                        feature_array = (self._vocabulary[key][:])
+                        feature_array = np.insert(feature_array, 0, termvectors[tweet_id].get(key))
+                        temp_vector.append(feature_array)
+                    else:
+                        temp_vector.append([0, 0, 0, 0])
+                else:
+                    if termvectors[tweet_id].get(key) is not None:
+                        temp_vector.append(self._vocabulary[key])
+                    else:
+                        temp_vector.append([0, 0, 0])
+
+            temp_vector = np.ravel(temp_vector)
+            termvectors[tweet_id] = np.array(temp_vector, dtype="int8")
+        return termvectors
 
 
 class TfIdf:
@@ -281,6 +354,9 @@ if __name__ == '__main__':
     # tv = Termvectorer()
     # print tv.create_term_vectors_as_dict(indices.INDEX_60k_FILTERED, tweets)
     # print tv.create_term_vectors_as_array(indices.INDEX_60k_FILTERED, tweets)
+
+    # print tv.create_sentiment_vectors_as_array(indices.INDEX_60k_FILTERED, tweets, True)
+    # print tv.create_sentiment_vectors_as_dict(indices.INDEX_60k_FILTERED, tweets, True)
 
     # ngrams beispeile
     # tweet = Tweet({"tweet": "ich bin hier du bist hier schnabeltier"})
