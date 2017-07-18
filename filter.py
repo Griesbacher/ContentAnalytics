@@ -164,6 +164,18 @@ def get_filter_from_index(index):
     def filter_filtered_ngrammed8(tweets):
         return apply_filters(tweets, filter_tweet, filter_ngram8)
 
+    @index_filter(indices.INDEX_60k_FILTERED_STOPPED_NGRAMMED4)
+    def filter_filtered_stopped_ngrammed4(tweets):
+        return apply_filters(tweets, filter_tweet, filter_stop_remove, filter_ngram4)
+
+    @index_filter(indices.INDEX_60k_FILTERED_SPELLED_LEMED_NGRAMMED4)
+    def filter_filtered_spelled_lemed_ngrammed4(tweets):
+        return apply_filters(tweets, filter_tweet, filter_spell_checked_lem, filter_ngram4)
+
+    @index_filter(indices.INDEX_60k_FILTERED_STOPPED_SPELLED_LEMED_NGRAMMED4)
+    def filter_filtered_stopped_spelled_lemed_ngrammed4(tweets):
+        return apply_filters(tweets, filter_tweet, filter_stop_remove, filter_spell_checked_lem, filter_ngram4)
+
     def filter_none(tweets):
         return tweets
 
