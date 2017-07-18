@@ -27,6 +27,9 @@ INDEX_60k_FILTERED_NGRAMMED2 = "index_60k_filtered_ngrammed2"
 INDEX_60k_FILTERED_NGRAMMED4 = "index_60k_filtered_ngrammed4"
 INDEX_60k_FILTERED_NGRAMMED6 = "index_60k_filtered_ngrammed6"
 INDEX_60k_FILTERED_NGRAMMED8 = "index_60k_filtered_ngrammed8"
+INDEX_60k_FILTERED_STOPPED_NGRAMMED4 = "index_60k_filtered_stopped_ngrammed4"
+INDEX_60k_FILTERED_SPELLED_LEMED_NGRAMMED4 = "index_60k_filtered_spelled_lemed_ngrammed4"
+INDEX_60k_FILTERED_STOPPED_SPELLED_LEMED_NGRAMMED4 = "index_60k_filtered_stopped_spelled_lemed_ngrammed4"
 
 
 def get_all_indices():

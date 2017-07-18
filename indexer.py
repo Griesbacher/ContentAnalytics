@@ -170,6 +170,21 @@ def index_60k_filtered_ngrammed8(tweets):
     index_data_filtered(tweets, indices.INDEX_60k_FILTERED_NGRAMMED8, 60000)
 
 
+@indexer
+def index_60k_filtered_stopped_ngrammed4(tweets):
+    index_data_filtered(tweets, indices.INDEX_60k_FILTERED_STOPPED_NGRAMMED4, 60000)
+
+
+@indexer
+def index_60k_filtered_spelled_lemed_ngrammed4(tweets):
+    index_data_filtered(tweets, indices.INDEX_60k_FILTERED_SPELLED_LEMED_NGRAMMED4, 60000)
+
+
+@indexer
+def index_60k_filtered_stopped_spelled_lemed_ngrammed4(tweets):
+    index_data_filtered(tweets, indices.INDEX_60k_FILTERED_STOPPED_SPELLED_LEMED_NGRAMMED4, 60000)
+
+
 def index_everything(tweets):
     for index in indexers:
         index(tweets)
