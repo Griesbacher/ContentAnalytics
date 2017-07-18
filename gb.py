@@ -200,8 +200,8 @@ class GB:
     def create_sentiment_vectors_feature(self, train_tweets, test_tweets):
         print "creating sentiment_vectors %d" % self.n
         start_tense = time.time()
-        result = self._tv.create_sentiment_vectors_as_array(self._train_index, train_tweets), \
-                 self._tv.create_sentiment_vectors_as_dict(self._test_index, test_tweets)
+        result = self._tv.create_sentiment_vectors_as_array(self._train_index, train_tweets, True), \
+                 self._tv.create_sentiment_vectors_as_dict(self._test_index, test_tweets, True)
         print "finished sentiment_vectors %d - %ds" % (self.n, time.time() - start_tense)
         return result
 
