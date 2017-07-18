@@ -84,7 +84,7 @@ class Termvectorer:
         self._vocabulary = vocabulary_dict
         return termvectors
 
-    def create_sentiment_vectors_as_array(self, index, tweets, with_count):
+    def create_sentiment_vectors_as_array(self, index, tweets, with_count=False):
         termvectors = self.build_vocabulary_with_sentiments(index, tweets)
         if with_count:
             length = 4
@@ -111,7 +111,7 @@ class Termvectorer:
             x[i] = np.array(temp_vector, dtype="int8")
         return x
 
-    def create_sentiment_vectors_as_dict(self, index, tweets, with_count):
+    def create_sentiment_vectors_as_dict(self, index, tweets, with_count=False):
         termvectors = self.build_vocabulary_with_sentiments(index, tweets)
         for tweet_id in termvectors:
             temp_vector = []
