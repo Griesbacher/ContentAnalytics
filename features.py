@@ -73,19 +73,21 @@ class Termvectorer:
         if empty_vectors > 5:
             print "!!!!! %d Tweets did not return a termvector for index: %s!!!!!" % (empty_vectors, index)
 
-        vocabulary = set()
-        for term_vector in termvectors.values():
-            vocabulary.update(term_vector.keys())
-        vocabulary_list = list(vocabulary)
-        vocabulary_dict = {}
-        for word in vocabulary_list:
-            sentiment_scores = Rater.get_sentiment_from_string(word)
-            vocabulary_dict[word] = sentiment_scores[:3]
-        self._vocabulary = vocabulary_dict
+        if len(self._vocabulary) == 0:
+            vocabulary = set()
+            for term_vector in termvectors.values():
+                vocabulary.update(term_vector.keys())
+            vocabulary_list = list(vocabulary)
+            vocabulary_dict = {}
+            for word in vocabulary_list:
+                sentiment_scores = Rater.get_sentiment_from_string(word)
+                vocabulary_dict[word] = sentiment_scores[:3]
+            self._vocabulary = vocabulary_dict
         return termvectors
 
     def create_sentiment_vectors_as_array(self, index, tweets, with_count=False):
         termvectors = self.build_vocabulary_with_sentiments(index, tweets)
+
         if with_count:
             length = 4
         else:
@@ -113,6 +115,7 @@ class Termvectorer:
 
     def create_sentiment_vectors_as_dict(self, index, tweets, with_count=False):
         termvectors = self.build_vocabulary_with_sentiments(index, tweets)
+
         for tweet_id in termvectors:
             temp_vector = []
             for key in self._vocabulary:
