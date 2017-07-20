@@ -199,7 +199,7 @@ def visualize_error(train_csv=indexer.TRAININGS_DATA_FILE, folder="."):
     ind = np.arange(len(best.keys()))
     rects1 = ax.bar(ind, avg, width, color='r', yerr=std_dev)
     ax.set_ylabel('Avg. error')
-    ax.set_title('Bar: avg. error / Numbers(Lines): std dev')
+    ax.set_title('Bar: avg. error / Lines: std dev')
     ax.set_xticks(ind + width / 2)
     ax.set_xticklabels((natural_sort(best.keys())))
     for rect in rects1:
