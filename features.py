@@ -350,13 +350,15 @@ if __name__ == '__main__':
     # print merge_numpy_dict_features([{0: np.array([1, 1]), 2: np.array([2, 2])}, {0: np.array([3]), 2: np.array([4])}])
 
     # Termvector example
-    # tweets = [Tweet({"id": 1}), Tweet({"id": 2})]
-    # tv = Termvectorer()
-    # print tv.create_term_vectors_as_dict(indices.INDEX_60k_FILTERED, tweets)
-    # print tv.create_term_vectors_as_array(indices.INDEX_60k_FILTERED, tweets)
-
-    # print tv.create_sentiment_vectors_as_array(indices.INDEX_60k_FILTERED, tweets, True)
-    # print tv.create_sentiment_vectors_as_dict(indices.INDEX_60k_FILTERED, tweets, True)
+    tweets = [Tweet({"id": 1}), Tweet({"id": 2})]
+    tv = Termvectorer()
+    print "termvector"
+    print tv.create_term_vectors_as_array(indices.INDEX_60k_FILTERED, tweets)
+    print tv.create_term_vectors_as_array(indices.INDEX_60k_FILTERED, [Tweet({"id": 3}), Tweet({"id": 6})])
+    print "sentiment"
+    tv = Termvectorer()
+    print tv.create_sentiment_vectors_as_array(indices.INDEX_60k_FILTERED, tweets, True)
+    print tv.create_sentiment_vectors_as_array(indices.INDEX_60k_FILTERED, [Tweet({"id": 3}), Tweet({"id": 6})], True)
 
     # ngrams beispeile
     # tweet = Tweet({"tweet": "ich bin hier du bist hier schnabeltier"})
@@ -374,10 +376,10 @@ if __name__ == '__main__':
     # ngrammer = Ngrams(3)
     # print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
 
-    tweets = load_tweet_csv("train.csv")[:2]
-    print tweets
-    ngrammer = Ngrams(2)
-    print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
+    # tweets = load_tweet_csv("train.csv")[:2]
+    # print tweets
+    # ngrammer = Ngrams(2)
+    # print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
     # not quite right. the tweets should be filtered first, like the index. but that is not
     # possible here, since there are cyclic imports everywhere.
-    print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
+    # print ngrammer.create_ngrams_as_dict(indices.INDEX_60k_FILTERED_NGRAMMED2, tweets)
