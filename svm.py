@@ -1,11 +1,13 @@
+import numpy as np
 from sklearn import svm
 
 import multiprocessing
 
 from csv_handling import load_tweet_csv, write_tweets_to_csv
+from features import Termvectorer
 from filter import get_filter_from_index
 from indexer import TRAININGS_DATA_FILE
-from indices import INDEX_60k_FILTERED, INDEX_ALL_FILTERED_LEMED
+from indices import INDEX_60k_FILTERED, INDEX_ALL_FILTERED_LEMED, INDEX_60k_FILTERED_STOPPED_SPELLED_LEMED
 from tweet import Tweet
 from elasticsearch import Elasticsearch
 
@@ -66,12 +68,41 @@ class SVM:
         support_vector = map(lambda x: term_vector.get(x, 0), self._vocabulary)
         return support_vector
 
+    def get_sentiment_support_vector(self, term_vector, with_count):
+        # type: (dict) -> list
+        """
+        Gets the support vector for a tweet. This may only be called after having called learn(), because
+        the vocabulary needs to be built first. Changing the vocabulary later will cause inconsistent support vectors.
+        :param term_vector: the termvector to use.
+        :return: the supportvector as a list of numbers
+        """
+        support_vector = []
+
+        for key in self._vocabulary:
+            if with_count:
+                if term_vector.get(key) is not None:
+                    # print("f {}".format(self._vocabulary[key]))
+                    feature_array = (self._vocabulary[key][:])
+                    feature_array.insert(0, term_vector.get(key))
+                    support_vector.append(feature_array)
+                else:
+                    support_vector.append([0, 0, 0, 0])
+            else:
+                if term_vector.get(key) is not None:
+                    support_vector.append(self._vocabulary[key])
+                else:
+                    support_vector.append([0, 0, 0])
+
+        support_vector = np.ravel(support_vector)
+        return support_vector
+
     def learn(self, tweets, verbose=False):
         # type: (list, bool) -> None
         """
         Learn how to classify tweets with a list of labeled example tweets
         :param tweets: the list of tweets to learn from
         :param verbose: print extra information to console, if set to true
+        """
         """
         # get all termvectors (for vocabulary building)
         if verbose:
@@ -91,7 +122,11 @@ class SVM:
             print "Creating support vectors"
         for tweet_id in termvectors:
             termvectors[tweet_id] = self.get_support_vector(termvectors[tweet_id])
+        """
+        v = Termvectorer()
+        termvectors = v.create_sentiment_vectors_as_dict(self._index, tweets, False)
 
+        self._vocabulary = vars(v)["_vocabulary"]
         if self._separate_sw:
             # fit k classifiers
             for tweet_class, classifier in self._kclassifiers.iteritems():
@@ -140,7 +175,8 @@ class SVM:
         :return: the same tweet with updated classes
         """
         # type: (Tweet) -> Tweet
-        term_vectors = self.get_support_vector(self.get_term_vector(tweet))
+        # term_vectors = self.get_support_vector(self.get_term_vector(tweet))
+        term_vectors = self.get_sentiment_support_vector(self.get_term_vector(tweet), False)
         if self._separate_sw:
             for tweet_class, clf in self._kclassifiers.iteritems():
                 class_result = int(self._kclassifiers[tweet_class].predict([term_vectors]).tolist()[0])
@@ -175,7 +211,7 @@ if __name__ == '__main__':
     separate_sw = False
     use_probabilities = True
     trainigSetSize = 60000  # up to 60000 possible
-    index = INDEX_60k_FILTERED
+    index = INDEX_60k_FILTERED_STOPPED_SPELLED_LEMED
     svm_classifier = SVM(index, Elasticsearch(), separate_sw, use_probabilities)
     print "SVM learning..."
     plain_learn_tweets = load_tweet_csv(TRAININGS_DATA_FILE, use_pickle=False, use_cache=False)[:trainigSetSize]
