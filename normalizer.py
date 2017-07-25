@@ -7,6 +7,7 @@ try:
 
     enchant_enabled = True
 except Exception:
+    print "Missing enchant!!!!"
     enchant_enabled = False
 import re
 import sys
@@ -129,7 +130,7 @@ class Normalizer:
             return suggestion_double
 
 
-if __name__ == '__main__':
+def tests():
     print Normalizer().stopwords_remove("At eight o'clock on Thursday morning... Arthur didn't feel very good.")
 
     print Normalizer().stem("At eight o'clock on Thursday morning... Arthur didn't feel very good.")
@@ -145,3 +146,9 @@ if __name__ == '__main__':
 
     print Normalizer().lem("hello did hoooottttt glllooooorious moooney!!!!!")
     print Normalizer().lem("hello did hoooottttt glllooooorious moooney!!!!!", True)
+
+
+if __name__ == '__main__':
+    print "Tweet: 18756"
+    print "So hottttt. Love this weather :-D"
+    print Normalizer.autocorrect_sentence("So hottttt. Love this weather :-D")
